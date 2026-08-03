@@ -1,0 +1,75 @@
+.arbre,
+.arbre ul {
+  display: flex;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.arbre ul {
+  position: relative;
+  padding-top: 24px;
+}
+
+.arbre li {
+  position: relative;
+  padding: 24px 6px 0;
+  text-align: center;
+}
+
+.arbre li::before,
+.arbre li::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 50%;
+  width: 50%;
+  height: 24px;
+  border-top: 1px solid var(--arbre-ligne);
+}
+
+.arbre li::after {
+  right: auto;
+  left: 50%;
+  border-left: 1px solid var(--arbre-ligne);
+}
+
+.arbre li:only-child::before,
+.arbre li:only-child::after {
+  display: none;
+}
+
+.arbre li:only-child {
+  padding-top: 0;
+}
+
+.arbre li:first-child::before,
+.arbre li:last-child::after {
+  border: 0 none;
+}
+
+.arbre li:last-child::before {
+  border-right: 1px solid var(--arbre-ligne);
+  border-radius: 0 5px 0 0;
+}
+
+.arbre li:first-child::after {
+  border-radius: 5px 0 0 0;
+}
+
+.arbre ul ul::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 0;
+  height: 24px;
+  border-left: 1px solid var(--arbre-ligne);
+}
+
+.groupe {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}

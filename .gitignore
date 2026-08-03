@@ -1,0 +1,25 @@
+# Dépendances
+node_modules/
+.next/
+out/
+
+# Environnement — NE JAMAIS COMMITER
+.env
+.env.local
+.env*.local
+
+# Fichiers système
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# TS
+*.tsbuildinfo
+next-env.d.ts
+
+# Outils
+.vercel
+coverage/
