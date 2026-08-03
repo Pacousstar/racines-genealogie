@@ -18,19 +18,21 @@ export type ResultatPersonne = {
 type Props = {
   label: string;
   placeholder?: string;
+  valeurInitiale?: ResultatPersonne | null;
   onChange: (p: ResultatPersonne | null) => void;
 };
 
 export default function RecherchePersonne({
   label,
   placeholder = "Chercher un nom…",
+  valeurInitiale = null,
   onChange,
 }: Props) {
   const [q, setQ] = useState("");
   const [resultats, setResultats] = useState<ResultatPersonne[]>([]);
   const [ouvert, setOuvert] = useState(false);
   const [recherche, setRecherche] = useState(false);
-  const [choisi, setChoisi] = useState<ResultatPersonne | null>(null);
+  const [choisi, setChoisi] = useState<ResultatPersonne | null>(valeurInitiale);
   const racineRef = useRef<HTMLDivElement>(null);
 
 useEffect(() => {

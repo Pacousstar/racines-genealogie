@@ -133,7 +133,18 @@ export function construitArbre(
     const conjoint = partenaireId ? parId.get(partenaireId) ?? null : null;
     if (partenaireId) nouveauVisite.add(partenaireId);
 
-    const enfants = Array.from(enfantsDe.get(id) ?? [])
+    // Enfants du COUPLE : union des enfants du parent et de son/sa conjoint(e),
+    // pour qu'un enfant relié à la mère seulement apparaisse quand même sous le père.
+    const enfantsDuCouple = new Map<string, number>();
+    const ajouterEnfants = (parentId: string) => {
+      for (const [enfantId, rang] of enfantsDe.get(parentId) ?? []) {
+        enfantsDuCouple.set(enfantId, Math.min(enfantsDuCouple.get(enfantId) ?? rang, rang));
+      }
+    };
+    ajouterEnfants(id);
+    if (partenaireId) ajouterEnfants(partenaireId);
+
+    const enfants = Array.from(enfantsDuCouple)
       .map(([enfantId, rang]) => {
         const enfant = parId.get(enfantId);
         return enfant ? { enfant, rang } : null;

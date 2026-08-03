@@ -5,11 +5,32 @@ import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { Plus, RotateCcw, Loader2 } from "lucide-react";
 import { declarer } from "@/app/tableau/declarer/actions";
-import RecherchePersonne from "@/components/saisie/recherche-personne";
+import { modifier } from "@/app/tableau/personnes/actions";
+import RecherchePersonne, {
+  type ResultatPersonne,
+} from "@/components/saisie/recherche-personne";
 
 type Options = {
   quartiers: { id: string; nom: string }[];
   familles: { id: string; nom: string; quartier_id: string | null }[];
+};
+
+export type PersonneEdition = {
+  id: string;
+  nom: string;
+  prenom: string | null;
+  surnom: string | null;
+  sexe: "M" | "F" | null;
+  vivant: boolean | null;
+  date_naissance: string | null;
+  date_deces: string | null;
+  quartier_id: string | null;
+  famille_id: string | null;
+  source: string | null;
+  fiabilite: string | null;
+  pere: ResultatPersonne | null;
+  mere: ResultatPersonne | null;
+  conjoint: ResultatPersonne | null;
 };
 
 const SOURCES = ["Témoignage du CHO", "Registre", "Document", "Autre"];
@@ -39,25 +60,34 @@ function Radio({
   );
 }
 
-export default function FormulaireDeclaration({ options }: { options: Options }) {
+export default function FormulaireDeclaration({
+  options,
+  personne,
+}: {
+  options: Options;
+  personne?: PersonneEdition | null;
+}) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
+  const edition = Boolean(personne);
 
-  const [nom, setNom] = useState("");
-  const [prenom, setPrenom] = useState("");
-  const [surnom, setSurnom] = useState("");
-  const [sexe, setSexe] = useState<"M" | "F" | null>(null);
-  const [vivant, setVivant] = useState(true);
-  const [dateNaissance, setDateNaissance] = useState("");
-  const [dateDeces, setDateDeces] = useState("");
-  const [quartierId, setQuartierId] = useState("");
-  const [familleId, setFamilleId] = useState("");
-  const [source, setSource] = useState("Témoignage du CHO");
-  const [fiabilite, setFiabilite] = useState("confirmé");
+  const [nom, setNom] = useState(personne?.nom ?? "");
+  const [prenom, setPrenom] = useState(personne?.prenom ?? "");
+  const [surnom, setSurnom] = useState(personne?.surnom ?? "");
+  const [sexe, setSexe] = useState<"M" | "F" | null>(personne?.sexe ?? null);
+  const [vivant, setVivant] = useState(personne ? (personne.vivant ?? true) : true);
+  const [dateNaissance, setDateNaissance] = useState(personne?.date_naissance ?? "");
+  const [dateDeces, setDateDeces] = useState(personne?.date_deces ?? "");
+  const [quartierId, setQuartierId] = useState(personne?.quartier_id ?? "");
+  const [familleId, setFamilleId] = useState(personne?.famille_id ?? "");
+  const [source, setSource] = useState(personne?.source ?? "Témoignage du CHO");
+  const [fiabilite, setFiabilite] = useState(personne?.fiabilite ?? "confirmé");
   const [provisoireParents, setProvisoireParents] = useState(false);
-  const [pereId, setPereId] = useState<string | null>(null);
-  const [mereId, setMereId] = useState<string | null>(null);
-  const [conjointId, setConjointId] = useState<string | null>(null);
+  const [pereId, setPereId] = useState<string | null>(personne?.pere?.id ?? null);
+  const [mereId, setMereId] = useState<string | null>(personne?.mere?.id ?? null);
+  const [conjointId, setConjointId] = useState<string | null>(
+    personne?.conjoint?.id ?? null
+  );
 
   const famillesFiltrees = useMemo(() => {
     if (!quartierId) return options.familles;
@@ -69,30 +99,34 @@ export default function FormulaireDeclaration({ options }: { options: Options })
       toast.error("Le nom est obligatoire.");
       return;
     }
+    const donnees = {
+      nom,
+      prenom,
+      surnom,
+      sexe,
+      vivant,
+      date_naissance: dateNaissance,
+      date_deces: dateDeces,
+      quartier_id: quartierId || null,
+      famille_id: familleId || null,
+      source,
+      fiabilite,
+      pere_id: pereId,
+      mere_id: mereId,
+      conjoint_id: conjointId,
+    };
     startTransition(async () => {
-      const res = await declarer({
-        nom,
-        prenom,
-        surnom,
-        sexe,
-        vivant,
-        date_naissance: dateNaissance,
-        date_deces: dateDeces,
-        quartier_id: quartierId || null,
-        famille_id: familleId || null,
-        source,
-        fiabilite,
-        pere_id: pereId,
-        mere_id: mereId,
-        conjoint_id: conjointId,
-        provisoireParents,
-      });
+      const res = edition && personne
+        ? await modifier(personne.id, donnees)
+        : await declarer({ ...donnees, provisoireParents });
       if (res.erreur) {
         toast.error(res.erreur);
         return;
       }
       if (res.id) {
-        toast.success("Personne enregistrée dans le tableau.");
+        toast.success(
+          edition ? "Modifications enregistrées." : "Personne enregistrée dans le tableau."
+        );
         router.push(`/tableau/personnes/${res.id}`);
         router.refresh();
       }
@@ -100,21 +134,21 @@ export default function FormulaireDeclaration({ options }: { options: Options })
   };
 
   const reinit = () => {
-    setNom("");
-    setPrenom("");
-    setSurnom("");
-    setSexe(null);
-    setVivant(true);
-    setDateNaissance("");
-    setDateDeces("");
-    setQuartierId("");
-    setFamilleId("");
-    setSource("Témoignage du CHO");
-    setFiabilite("confirmé");
+    setNom(personne?.nom ?? "");
+    setPrenom(personne?.prenom ?? "");
+    setSurnom(personne?.surnom ?? "");
+    setSexe(personne?.sexe ?? null);
+    setVivant(personne ? (personne.vivant ?? true) : true);
+    setDateNaissance(personne?.date_naissance ?? "");
+    setDateDeces(personne?.date_deces ?? "");
+    setQuartierId(personne?.quartier_id ?? "");
+    setFamilleId(personne?.famille_id ?? "");
+    setSource(personne?.source ?? "Témoignage du CHO");
+    setFiabilite(personne?.fiabilite ?? "confirmé");
     setProvisoireParents(false);
-    setPereId(null);
-    setMereId(null);
-    setConjointId(null);
+    setPereId(personne?.pere?.id ?? null);
+    setMereId(personne?.mere?.id ?? null);
+    setConjointId(personne?.conjoint?.id ?? null);
   };
 
   const champ = (label: string, value: string, set: (v: string) => void) => (
@@ -223,25 +257,37 @@ export default function FormulaireDeclaration({ options }: { options: Options })
           4 · Liens
         </legend>
         <div className="grid gap-4 sm:grid-cols-3">
-          <RecherchePersonne label="Père" onChange={(p) => setPereId(p ? p.id : null)} />
-          <RecherchePersonne label="Mère" onChange={(p) => setMereId(p ? p.id : null)} />
+          <RecherchePersonne
+            label="Père"
+            valeurInitiale={personne?.pere ?? null}
+            onChange={(p) => setPereId(p ? p.id : null)}
+          />
+          <RecherchePersonne
+            label="Mère"
+            valeurInitiale={personne?.mere ?? null}
+            onChange={(p) => setMereId(p ? p.id : null)}
+          />
           <RecherchePersonne
             label="Conjoint(e)"
+            valeurInitiale={personne?.conjoint ?? null}
             onChange={(p) => setConjointId(p ? p.id : null)}
           />
         </div>
-        <label className="mt-4 flex items-start gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={provisoireParents}
-            onChange={(e) => setProvisoireParents(e.target.checked)}
-            className="mt-0.5"
-          />
-          <span>
-            Je n&apos;ai pas encore la personne → créer des <em>cartes provisoires</em>{" "}
-            « Père/Mère inconnu » (complétées plus tard).
-          </span>
-        </label>
+        {!edition && (
+          <label className="mt-4 flex items-start gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={provisoireParents}
+              onChange={(e) => setProvisoireParents(e.target.checked)}
+              className="mt-0.5"
+            />
+            <span>
+              Je n&apos;ai pas encore la personne → créer des{" "}
+              <em>cartes provisoires</em> « Père/Mère inconnu » (complétées plus
+              tard).
+            </span>
+          </label>
+        )}
       </fieldset>
 
       <fieldset className="rounded-2xl border border-current/10 bg-white/70 p-5">
@@ -281,7 +327,7 @@ export default function FormulaireDeclaration({ options }: { options: Options })
           ) : (
             <Plus className="h-5 w-5" aria-hidden />
           )}
-          Ajouter la personne
+          {edition ? "Enregistrer les modifications" : "Ajouter la personne"}
         </button>
         <button
           type="button"

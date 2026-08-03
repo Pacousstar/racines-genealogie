@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Star, Heart, Crown } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import ActionsFiche from "@/components/saisie/actions-fiche";
 import {
   initiales,
   nomComplet,
@@ -98,6 +99,18 @@ export default async function FichePersonnePage({
 }) {
   const { id } = await params;
   const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const { data: profil } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user!.id)
+    .single();
+  const role = profil?.role;
+  const estEditeur = role === "editeur" || role === "admin";
 
   const { data: personne } = await supabase
     .from("personnes")
@@ -278,6 +291,8 @@ export default async function FichePersonnePage({
           ))}
         </Bloc>
       </section>
+
+      {estEditeur && <ActionsFiche id={id} />}
     </main>
   );
 }

@@ -8,12 +8,12 @@
 
 .arbre ul {
   position: relative;
-  padding-top: 24px;
+  padding-top: 28px;
 }
 
 .arbre li {
   position: relative;
-  padding: 24px 6px 0;
+  padding: 28px 6px 0;
   text-align: center;
 }
 
@@ -24,7 +24,7 @@
   top: 0;
   right: 50%;
   width: 50%;
-  height: 24px;
+  height: 28px;
   border-top: 1px solid var(--arbre-ligne);
 }
 
@@ -41,6 +41,8 @@
 
 .arbre li:only-child {
   padding-top: 0;
+  padding-left: 0;
+  padding-right: 0;
 }
 
 .arbre li:first-child::before,
@@ -63,13 +65,41 @@
   top: 0;
   left: 50%;
   width: 0;
-  height: 24px;
+  height: 28px;
   border-left: 1px solid var(--arbre-ligne);
 }
 
-.groupe {
+/* Bloc couple : deux cartes côte à côte reliées par ⚭ */
+.couple {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 0;
+}
+
+.union {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px;
+  color: var(--arbre-ligne);
+}
+
+.trait {
+  width: 22px;
+  height: 2px;
+  background: var(--arbre-ligne);
+  border-radius: 2px;
+}
+
+.symbole {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 9999px;
+  border: 2px solid var(--arbre-ligne);
+  background: #fff;
+  font-size: 13px;
+  line-height: 1;
 }

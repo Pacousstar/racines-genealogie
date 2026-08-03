@@ -49,7 +49,7 @@ export default async function TableauPage() {
       supabase.from("enfants").select("parent_id,enfant_id,rang"),
       supabase.from("unions").select("conjoint_1,conjoint_2,date_union"),
       supabase.from("quartiers").select("id,nom").order("ordre"),
-      supabase.from("familles").select("id"),
+      supabase.from("familles").select("id,nom,quartier_id").order("nom"),
     ]);
 
   const role = (profil?.role ?? "lecteur") as string;
@@ -58,11 +58,12 @@ export default async function TableauPage() {
   const liens = (liensRes.data ?? []) as unknown as LienEnfant[];
   const unions = (unionsRes.data ?? []) as unknown as Union[];
   const quartiers = quartiersRes.data ?? [];
+  const familles = famillesRes.data ?? [];
 
   const stats = [
     { label: "Personnes", value: personnes.length, Icon: Users },
     { label: "Quartiers", value: quartiers.length, Icon: MapPin },
-    { label: "Familles", value: famillesRes.data?.length ?? 0, Icon: Network },
+    { label: "Familles", value: familles.length, Icon: Network },
     { label: "Unions", value: unions.length, Icon: HeartHandshake },
   ];
 
@@ -119,6 +120,7 @@ export default async function TableauPage() {
           liens={liens}
           unions={unions}
           quartiers={quartiers}
+          familles={familles}
         />
       </main>
     </div>
