@@ -1,12 +1,15 @@
-export type Personne = {
-  id: string;
+export type IdentitePersonne = {
   nom: string;
   prenom: string | null;
-  surnom: string | null;
-  sexe: "M" | "F" | null;
+  sexe: string | null;
   date_naissance: string | null;
   date_deces: string | null;
   vivant: boolean | null;
+};
+
+export type Personne = IdentitePersonne & {
+  id: string;
+  surnom: string | null;
   quartier_id: string | null;
   famille_id: string | null;
   photo_url: string | null;
@@ -56,17 +59,17 @@ function anneeDe(d: string | null | undefined): number | null {
   return m ? Number(m[1]) : null;
 }
 
-export function nomComplet(p: Personne): string {
+export function nomComplet(p: IdentitePersonne): string {
   return [p.prenom, p.nom].filter(Boolean).join(" ").trim();
 }
 
-export function initiales(p: Personne): string {
+export function initiales(p: IdentitePersonne): string {
   const pre = p.prenom ? p.prenom.charAt(0) : "";
   const nom = p.nom ? p.nom.charAt(0) : "";
   return (pre + nom).toUpperCase();
 }
 
-export function periode(p: Personne): string {
+export function periode(p: IdentitePersonne): string {
   const n = p.date_naissance ?? "";
   const d = p.date_deces ?? "";
   if (p.vivant === false) {

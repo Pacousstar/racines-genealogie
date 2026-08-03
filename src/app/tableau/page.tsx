@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { LogOut, Users, MapPin, Network, HeartHandshake } from "lucide-react";
+import { LogOut, Users, MapPin, Network, HeartHandshake, FilePenLine } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import type { Personne, LienEnfant, Union } from "@/lib/arbre";
 import GrandTableau from "@/components/arbre/grand-tableau";
@@ -53,6 +53,7 @@ export default async function TableauPage() {
     ]);
 
   const role = (profil?.role ?? "lecteur") as string;
+  const estEditeur = role === "editeur" || role === "admin";
   const personnes = (personnesRes.data ?? []) as unknown as Personne[];
   const liens = (liensRes.data ?? []) as unknown as LienEnfant[];
   const unions = (unionsRes.data ?? []) as unknown as Union[];
@@ -79,6 +80,15 @@ export default async function TableauPage() {
         </div>
 
         <div className="ml-auto flex items-center gap-2 text-xs">
+          {estEditeur && (
+            <a
+              href="/tableau/declarer"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-700 px-3 py-1.5 font-semibold text-white transition hover:bg-emerald-800"
+            >
+              <FilePenLine className="h-4 w-4" aria-hidden />
+              Déclarer
+            </a>
+          )}
           {stats.map(({ label, value, Icon }) => (
             <span
               key={label}
