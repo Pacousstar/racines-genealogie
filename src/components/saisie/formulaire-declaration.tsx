@@ -3,7 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import { Plus, RotateCcw, Loader2 } from "lucide-react";
+import { Plus, RotateCcw, Loader2, X } from "lucide-react";
 import { declarer } from "@/app/tableau/declarer/actions";
 import { modifier } from "@/app/tableau/personnes/actions";
 import RecherchePersonne, {
@@ -31,6 +31,7 @@ export type PersonneEdition = {
   pere: ResultatPersonne | null;
   mere: ResultatPersonne | null;
   conjoint: ResultatPersonne | null;
+  enfants: ResultatPersonne[];
 };
 
 const SOURCES = ["Témoignage du CHO", "Registre", "Document", "Autre"];
@@ -80,6 +81,10 @@ export default function FormulaireDeclaration({
   const [dateDeces, setDateDeces] = useState(personne?.date_deces ?? "");
   const [quartierId, setQuartierId] = useState(personne?.quartier_id ?? "");
   const [familleId, setFamilleId] = useState(personne?.famille_id ?? "");
+  const [modeNouveauQuartier, setModeNouveauQuartier] = useState(false);
+  const [nouveauQuartier, setNouveauQuartier] = useState("");
+  const [modeNouvelleFamille, setModeNouvelleFamille] = useState(false);
+  const [nouvelleFamille, setNouvelleFamille] = useState("");
   const [source, setSource] = useState(personne?.source ?? "Témoignage du CHO");
   const [fiabilite, setFiabilite] = useState(personne?.fiabilite ?? "confirmé");
   const [provisoireParents, setProvisoireParents] = useState(false);
@@ -88,6 +93,18 @@ export default function FormulaireDeclaration({
   const [conjointId, setConjointId] = useState<string | null>(
     personne?.conjoint?.id ?? null
   );
+  const [enfants, setEnfants] = useState<(ResultatPersonne | null)[]>(
+    personne?.enfants?.length ? [...personne.enfants] : []
+  );
+
+  const ajouterEnfant = () => setEnfants((liste) => [...liste, null]);
+
+  const retirerEnfant = (index: number) =>
+    setEnfants((liste) => liste.filter((_, i) => i !== index));
+
+  const choisirEnfant =
+    (index: number) => (p: ResultatPersonne | null) =>
+      setEnfants((liste) => liste.map((e, i) => (i === index ? p : e)));
 
   const famillesFiltrees = useMemo(() => {
     if (!quartierId) return options.familles;
@@ -114,6 +131,11 @@ export default function FormulaireDeclaration({
       pere_id: pereId,
       mere_id: mereId,
       conjoint_id: conjointId,
+      nouveau_quartier: modeNouveauQuartier ? nouveauQuartier : "",
+      nouvelle_famille: modeNouvelleFamille ? nouvelleFamille : "",
+      enfants_ids: enfants
+        .filter((e): e is ResultatPersonne => e !== null)
+        .map((e) => e.id),
     };
     startTransition(async () => {
       const res = edition && personne
@@ -143,12 +165,17 @@ export default function FormulaireDeclaration({
     setDateDeces(personne?.date_deces ?? "");
     setQuartierId(personne?.quartier_id ?? "");
     setFamilleId(personne?.famille_id ?? "");
+    setModeNouveauQuartier(false);
+    setNouveauQuartier("");
+    setModeNouvelleFamille(false);
+    setNouvelleFamille("");
     setSource(personne?.source ?? "Témoignage du CHO");
     setFiabilite(personne?.fiabilite ?? "confirmé");
     setProvisoireParents(false);
     setPereId(personne?.pere?.id ?? null);
     setMereId(personne?.mere?.id ?? null);
     setConjointId(personne?.conjoint?.id ?? null);
+    setEnfants(personne?.enfants?.length ? [...personne.enfants] : []);
   };
 
   const champ = (label: string, value: string, set: (v: string) => void) => (
@@ -165,39 +192,98 @@ export default function FormulaireDeclaration({
   const selectQuartiers = (
     <label className="flex flex-col gap-1 text-sm">
       <span className="font-medium">Quartier</span>
-      <select
-        value={quartierId}
-        onChange={(e) => {
-          setQuartierId(e.target.value);
-          setFamilleId("");
-        }}
-        className="rounded-lg border px-3 py-2 text-base"
-      >
-        <option value="">— Aucun quartier —</option>
-        {options.quartiers.map((q) => (
-          <option key={q.id} value={q.id}>
-            {q.nom}
-          </option>
-        ))}
-      </select>
+      {modeNouveauQuartier ? (
+        <div className="flex gap-2">
+          <input
+            autoFocus
+            value={nouveauQuartier}
+            onChange={(e) => setNouveauQuartier(e.target.value)}
+            placeholder="Nom du nouveau quartier…"
+            className="flex-1 rounded-lg border px-3 py-2 text-base"
+          />
+          <button
+            type="button"
+            onClick={() => {
+              setModeNouveauQuartier(false);
+              setNouveauQuartier("");
+            }}
+            className="rounded-lg border px-3 py-2 text-sm font-medium transition hover:bg-current/5"
+          >
+            Annuler
+          </button>
+        </div>
+      ) : (
+        <select
+          value={quartierId}
+          onChange={(e) => {
+            if (e.target.value === "__nouveau__") {
+              setModeNouveauQuartier(true);
+              setQuartierId("");
+              setFamilleId("");
+              return;
+            }
+            setQuartierId(e.target.value);
+            setFamilleId("");
+          }}
+          className="rounded-lg border px-3 py-2 text-base"
+        >
+          <option value="">— Aucun quartier —</option>
+          {options.quartiers.map((q) => (
+            <option key={q.id} value={q.id}>
+              {q.nom}
+            </option>
+          ))}
+          <option value="__nouveau__">＋ Ajouter un quartier…</option>
+        </select>
+      )}
     </label>
   );
 
   const selectFamilles = (
     <label className="flex flex-col gap-1 text-sm">
       <span className="font-medium">Famille</span>
-      <select
-        value={familleId}
-        onChange={(e) => setFamilleId(e.target.value)}
-        className="rounded-lg border px-3 py-2 text-base"
-      >
-        <option value="">— Aucune famille —</option>
-        {famillesFiltrees.map((f) => (
-          <option key={f.id} value={f.id}>
-            {f.nom}
-          </option>
-        ))}
-      </select>
+      {modeNouvelleFamille ? (
+        <div className="flex gap-2">
+          <input
+            autoFocus
+            value={nouvelleFamille}
+            onChange={(e) => setNouvelleFamille(e.target.value)}
+            placeholder="Nom de la nouvelle famille…"
+            className="flex-1 rounded-lg border px-3 py-2 text-base"
+          />
+          <button
+            type="button"
+            onClick={() => {
+              setModeNouvelleFamille(false);
+              setNouvelleFamille("");
+            }}
+            className="rounded-lg border px-3 py-2 text-sm font-medium transition hover:bg-current/5"
+          >
+            Annuler
+          </button>
+        </div>
+      ) : (
+        <select
+          value={familleId}
+          onChange={(e) => {
+            if (e.target.value === "__nouveau__") {
+              setModeNouvelleFamille(true);
+              setFamilleId("");
+              return;
+            }
+            setFamilleId(e.target.value);
+          }}
+          className="rounded-lg border px-3 py-2 text-base"
+        >
+          <option value="">— Aucune famille —</option>
+          {famillesFiltrees.map((f) => (
+            <option key={f.id} value={f.id}>
+              {f.nom}
+            </option>
+          ))}
+          <option value="__nouveau__">＋ Ajouter une famille…</option>
+        </select>
+      )}
     </label>
   );
 
@@ -209,8 +295,8 @@ export default function FormulaireDeclaration({
       }}
       className="flex flex-col gap-5"
     >
-      <fieldset className="rounded-2xl border border-current/10 bg-white/70 p-5">
-        <legend className="px-2 text-sm font-bold uppercase tracking-wide text-emerald-800">
+      <fieldset className="rounded-2xl border border-amber-700/30 bg-amber-50/70 p-5">
+        <legend className="px-2 text-sm font-bold uppercase tracking-wide text-amber-800">
           1 · Qui ?
         </legend>
         <div className="grid gap-4 sm:grid-cols-3">
@@ -232,8 +318,8 @@ export default function FormulaireDeclaration({
         </div>
       </fieldset>
 
-      <fieldset className="rounded-2xl border border-current/10 bg-white/70 p-5">
-        <legend className="px-2 text-sm font-bold uppercase tracking-wide text-emerald-800">
+      <fieldset className="rounded-2xl border border-amber-700/30 bg-amber-50/70 p-5">
+        <legend className="px-2 text-sm font-bold uppercase tracking-wide text-amber-800">
           2 · Dates (texte libre)
         </legend>
         <div className="grid gap-4 sm:grid-cols-2">
@@ -242,8 +328,8 @@ export default function FormulaireDeclaration({
         </div>
       </fieldset>
 
-      <fieldset className="rounded-2xl border border-current/10 bg-white/70 p-5">
-        <legend className="px-2 text-sm font-bold uppercase tracking-wide text-emerald-800">
+      <fieldset className="rounded-2xl border border-amber-700/30 bg-amber-50/70 p-5">
+        <legend className="px-2 text-sm font-bold uppercase tracking-wide text-amber-800">
           3 · Lieu
         </legend>
         <div className="grid gap-4 sm:grid-cols-2">
@@ -252,8 +338,8 @@ export default function FormulaireDeclaration({
         </div>
       </fieldset>
 
-      <fieldset className="rounded-2xl border border-current/10 bg-white/70 p-5">
-        <legend className="px-2 text-sm font-bold uppercase tracking-wide text-emerald-800">
+      <fieldset className="rounded-2xl border border-amber-700/30 bg-amber-50/70 p-5">
+        <legend className="px-2 text-sm font-bold uppercase tracking-wide text-amber-800">
           4 · Liens
         </legend>
         <div className="grid gap-4 sm:grid-cols-3">
@@ -288,10 +374,51 @@ export default function FormulaireDeclaration({
             </span>
           </label>
         )}
+
+        <div className="mt-5 border-t border-amber-700/20 pt-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className="text-sm font-medium">
+              Enfants de cette personne
+            </span>
+            <button
+              type="button"
+              onClick={ajouterEnfant}
+              className="inline-flex items-center gap-1 rounded-lg border border-amber-700/40 px-2.5 py-1 text-xs font-semibold text-amber-800 transition hover:bg-amber-700/10"
+            >
+              <Plus className="h-3.5 w-3.5" aria-hidden /> Ajouter un enfant
+            </button>
+          </div>
+          {enfants.length === 0 ? (
+            <p className="mt-2 text-xs opacity-60">
+              Aucun enfant relié pour l&apos;instant.
+            </p>
+          ) : (
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              {enfants.map((enfant, index) => (
+                <div key={index} className="relative">
+                  <RecherchePersonne
+                    label={`Enfant n° ${index + 1}`}
+                    valeurInitiale={enfant ?? null}
+                    onChange={choisirEnfant(index)}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => retirerEnfant(index)}
+                    className="absolute -right-2 -top-2 z-10 rounded-full bg-rose-600 p-1 text-white shadow transition hover:bg-rose-700"
+                    aria-label={`Retirer l'enfant n° ${index + 1}`}
+                    title="Retirer"
+                  >
+                    <X className="h-3 w-3" aria-hidden />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </fieldset>
 
-      <fieldset className="rounded-2xl border border-current/10 bg-white/70 p-5">
-        <legend className="px-2 text-sm font-bold uppercase tracking-wide text-emerald-800">
+      <fieldset className="rounded-2xl border border-amber-700/30 bg-amber-50/70 p-5">
+        <legend className="px-2 text-sm font-bold uppercase tracking-wide text-amber-800">
           5 · Source & fiabilité
         </legend>
         <div className="flex flex-wrap items-center gap-2">

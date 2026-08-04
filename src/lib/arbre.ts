@@ -176,11 +176,26 @@ export function construitArbre(
     )
     .filter((p) => p.est_ancetre === true || !enfantsConnus.has(p.id));
 
+  // Une personne sans parents mais qui est conjoint(e) d'une autre est déjà
+  // affichée dans l'arbre de son/sa partenaire : on ne la prend pas en racine.
+  // On construit les racines (ancêtres en premier) et on marque toutes les
+  // personnes couvertes (dont les conjoints) pour ne jamais les afficher deux fois.
+  const couverts = new Set<string>();
+  const couvrir = (n: ArbreNoeud) => {
+    couverts.add(n.personne.id);
+    if (n.conjoint) couverts.add(n.conjoint.id);
+    for (const e of n.enfants) couvrir(e);
+  };
+
   const visiteGlobale = new Set<string>();
   const resultat: ArbreNoeud[] = [];
   for (const r of racines) {
+    if (couverts.has(r.id)) continue;
     const n = construire(r.id, visiteGlobale, 0);
-    if (n) resultat.push(n);
+    if (n) {
+      resultat.push(n);
+      couvrir(n);
+    }
   }
   return resultat;
 }

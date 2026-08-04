@@ -61,6 +61,11 @@ VALUES
      (SELECT id FROM familles WHERE nom = 'Famille DIHI'),
      FALSE, 'confirmé', 'Lui-même'),
 
+    -- Mère de Tahidi Denis, arrivée par mariage
+    ('INCONNUE', 'Mère de Tahidi', 'F', NULL, NULL, FALSE,
+     NULL, NULL,
+     FALSE, 'incertain', 'Témoignage oral'),
+
     -- Génération vivante (enfant)
     ('DIHI', 'Marc Aurèle', 'M', '1995', NULL, TRUE,
      (SELECT id FROM quartiers WHERE nom = 'Quartier Centre'),
@@ -76,11 +81,11 @@ ON CONFLICT DO NOTHING;
 
 -- ── 4. Unions
 INSERT INTO unions (conjoint_1, conjoint_2, date_union) VALUES
-    ((SELECT id FROM personnes WHERE prenom = 'Léon'       AND nom = 'DIHI'),
-     (SELECT id FROM personnes WHERE prenom = 'Aya'        AND nom = 'GBEYA'),
+    ((SELECT id FROM personnes WHERE prenom = 'Léon'          AND nom = 'DIHI'),
+     (SELECT id FROM personnes WHERE prenom = 'Mère de Tahidi' AND nom = 'INCONNUE'),
      'vers 1960'),
     ((SELECT id FROM personnes WHERE prenom = 'Tahidi Denis' AND nom = 'DIHI'),
-     (SELECT id FROM personnes WHERE prenom = 'Aya'        AND nom = 'GBEYA'),
+     (SELECT id FROM personnes WHERE prenom = 'Aya'          AND nom = 'GBEYA'),
      '1992')
 ON CONFLICT DO NOTHING;
 
@@ -94,9 +99,10 @@ INSERT INTO enfants (parent_id, enfant_id, rang) VALUES
     ((SELECT id FROM personnes WHERE prenom = 'Kouamé'   AND nom = 'DIHI'),    (SELECT id FROM personnes WHERE prenom = 'Gbaya'    AND nom = 'DIHI'),     1),
     -- Gbaya → Léon
     ((SELECT id FROM personnes WHERE prenom = 'Gbaya'    AND nom = 'DIHI'),    (SELECT id FROM personnes WHERE prenom = 'Léon'     AND nom = 'DIHI'),     1),
-    -- Léon + Aya → Tahidi Denis
+    -- Léon + Mère de Tahidi → Tahidi Denis
     ((SELECT id FROM personnes WHERE prenom = 'Léon'     AND nom = 'DIHI'),    (SELECT id FROM personnes WHERE prenom = 'Tahidi Denis' AND nom = 'DIHI'), 1),
-    ((SELECT id FROM personnes WHERE prenom = 'Aya'      AND nom = 'GBEYA'),   (SELECT id FROM personnes WHERE prenom = 'Tahidi Denis' AND nom = 'DIHI'), 1),
-    -- Tahidi Denis → Marc Aurèle
-    ((SELECT id FROM personnes WHERE prenom = 'Tahidi Denis' AND nom = 'DIHI'),(SELECT id FROM personnes WHERE prenom = 'Marc Aurèle' AND nom = 'DIHI'), 1)
+    ((SELECT id FROM personnes WHERE prenom = 'Mère de Tahidi' AND nom = 'INCONNUE'), (SELECT id FROM personnes WHERE prenom = 'Tahidi Denis' AND nom = 'DIHI'), 1),
+    -- Tahidi Denis + Aya → Marc Aurèle
+    ((SELECT id FROM personnes WHERE prenom = 'Tahidi Denis' AND nom = 'DIHI'),(SELECT id FROM personnes WHERE prenom = 'Marc Aurèle' AND nom = 'DIHI'), 1),
+    ((SELECT id FROM personnes WHERE prenom = 'Aya'      AND nom = 'GBEYA'),   (SELECT id FROM personnes WHERE prenom = 'Marc Aurèle' AND nom = 'DIHI'), 1)
 ON CONFLICT DO NOTHING;

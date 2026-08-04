@@ -53,8 +53,9 @@ export default async function ModifierPersonnePage({
 
   if (!personne) notFound();
 
-  const [parentsRes, unionsRes, quartiersRes, famillesRes] = await Promise.all([
+  const [parentsRes, enfantsRes, unionsRes, quartiersRes, famillesRes] = await Promise.all([
     supabase.from("enfants").select("parent_id").eq("enfant_id", id),
+    supabase.from("enfants").select("enfant_id").eq("parent_id", id),
     supabase
       .from("unions")
       .select("conjoint_1,conjoint_2")
@@ -64,6 +65,7 @@ export default async function ModifierPersonnePage({
   ]);
 
   const parentsIds = (parentsRes.data ?? []).map((r) => r.parent_id);
+  const enfantsIds = (enfantsRes.data ?? []).map((r) => r.enfant_id);
   const union = (unionsRes.data ?? [])[0];
   const conjointId = union
     ? union.conjoint_1 === id
@@ -71,7 +73,9 @@ export default async function ModifierPersonnePage({
       : union.conjoint_1
     : null;
 
-  const lieIds = [...new Set([...parentsIds, ...(conjointId ? [conjointId] : [])])];
+  const lieIds = [
+    ...new Set([...parentsIds, ...enfantsIds, ...(conjointId ? [conjointId] : [])]),
+  ];
 
   const { data: lies } = lieIds.length
     ? await supabase
@@ -108,6 +112,9 @@ export default async function ModifierPersonnePage({
     pere: pere ? parId.get(pere) ?? null : null,
     mere: mere ? parId.get(mere) ?? null : null,
     conjoint: conjointId ? parId.get(conjointId) ?? null : null,
+    enfants: enfantsIds
+      .map((eid) => parId.get(eid))
+      .filter((p): p is ResultatPersonne => Boolean(p)),
   };
 
   return (

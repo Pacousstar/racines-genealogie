@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { obtenirOuCreerQuartier, obtenirOuCreerFamille } from "@/lib/nomenclature";
 
 export type Declaration = {
   nom: string;
@@ -17,6 +18,9 @@ export type Declaration = {
   pere_id: string | null;
   mere_id: string | null;
   conjoint_id: string | null;
+  nouveau_quartier: string;
+  nouvelle_famille: string;
+  enfants_ids: string[];
   provisoireParents: boolean;
 };
 
@@ -45,6 +49,16 @@ export async function declarer(
   const nom = d.nom.trim();
   if (!nom) return { erreur: "Le nom est obligatoire." };
 
+  const quartierId =
+    (d.nouveau_quartier?.trim()
+      ? await obtenirOuCreerQuartier(supabase, d.nouveau_quartier)
+      : d.quartier_id) ?? null;
+
+  const familleId =
+    (d.nouvelle_famille?.trim()
+      ? await obtenirOuCreerFamille(supabase, d.nouvelle_famille, quartierId)
+      : d.famille_id) ?? null;
+
   const { data: pers, error } = await supabase
     .from("personnes")
     .insert({
@@ -55,8 +69,8 @@ export async function declarer(
       vivant: d.vivant,
       date_naissance: d.date_naissance.trim() || null,
       date_deces: d.date_deces.trim() || null,
-      quartier_id: d.quartier_id,
-      famille_id: d.famille_id,
+      quartier_id: quartierId,
+      famille_id: familleId,
       source: d.source,
       fiabilite: d.fiabilite,
     })
@@ -105,6 +119,10 @@ export async function declarer(
         conjoint_2: d.conjoint_id,
         type: "mariage",
       });
+  }
+
+  for (const enfantId of d.enfants_ids ?? []) {
+    await supabase.from("enfants").insert({ parent_id: id, enfant_id: enfantId });
   }
 
   return { id };

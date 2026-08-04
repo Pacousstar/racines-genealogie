@@ -93,10 +93,12 @@ function Noeud({
   noeud,
   liens,
   couleurById,
+  surlignes,
 }: {
   noeud: NonNullable<ReturnType<typeof prunerArbre>>;
   liens: MapQuartierFamille;
   couleurById: (id: string | null) => CouleurQuartier | null;
+  surlignes: ReadonlySet<string>;
 }) {
   const couleur = couleurById(noeud.personne.quartier_id);
   const nomQuartier = liens.quartierNom(noeud.personne.quartier_id);
@@ -128,6 +130,7 @@ function Noeud({
           personne={noeud.personne}
           quartier={liens.quartierNom(noeud.personne.quartier_id)}
           famille={liens.familleNom(noeud.personne.famille_id)}
+          surligne={surlignes.has(noeud.personne.id)}
         />
         {noeud.conjoint && (
           <>
@@ -140,6 +143,7 @@ function Noeud({
               personne={noeud.conjoint}
               quartier={liens.quartierNom(noeud.conjoint.quartier_id)}
               famille={liens.familleNom(noeud.conjoint.famille_id)}
+              surligne={surlignes.has(noeud.conjoint.id)}
             />
           </>
         )}
@@ -152,6 +156,7 @@ function Noeud({
               noeud={enfant}
               liens={liens}
               couleurById={couleurById}
+              surlignes={surlignes}
             />
           ))}
         </ul>
@@ -201,6 +206,16 @@ export default function GrandTableau({
       .map((r) => prunerArbre(r, match))
       .filter((n): n is NonNullable<typeof n> => n !== null);
   }, [arbre, filtre]);
+
+  const surlignes = useMemo(() => {
+    const ids = new Set<string>();
+    const terme = filtre.chercher.trim();
+    if (!terme) return ids;
+    for (const p of personnes) {
+      if (matchPersonne(p, { ...filtre, chercher: terme })) ids.add(p.id);
+    }
+    return ids;
+  }, [personnes, filtre]);
 
   const mesurer = useCallback(() => {
     const el = arbreRef.current;
@@ -259,6 +274,11 @@ export default function GrandTableau({
             placeholder="Rechercher un nom…"
             className="w-56 rounded-lg border px-8 py-2 text-sm"
           />
+          {surlignes.size > 0 && (
+            <span className="pointer-events-none absolute -right-2 -top-2 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-500 px-1.5 text-[10px] font-bold text-white">
+              {surlignes.size}
+            </span>
+          )}
         </label>
 
         <select
@@ -396,6 +416,7 @@ export default function GrandTableau({
                       noeud={racine}
                       liens={labels}
                       couleurById={labels.couleurById}
+                      surlignes={surlignes}
                     />
                   ))}
                 </ul>

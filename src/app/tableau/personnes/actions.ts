@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { obtenirOuCreerQuartier, obtenirOuCreerFamille } from "@/lib/nomenclature";
 
 export type Modification = {
   nom: string;
@@ -17,6 +18,9 @@ export type Modification = {
   pere_id: string | null;
   mere_id: string | null;
   conjoint_id: string | null;
+  nouveau_quartier: string;
+  nouvelle_famille: string;
+  enfants_ids: string[];
 };
 
 export type ResultatModification = { erreur?: string; id?: string };
@@ -45,6 +49,16 @@ export async function modifier(
   const nom = m.nom.trim();
   if (!nom) return { erreur: "Le nom est obligatoire." };
 
+  const quartierId =
+    (m.nouveau_quartier?.trim()
+      ? await obtenirOuCreerQuartier(supabase, m.nouveau_quartier)
+      : m.quartier_id) ?? null;
+
+  const familleId =
+    (m.nouvelle_famille?.trim()
+      ? await obtenirOuCreerFamille(supabase, m.nouvelle_famille, quartierId)
+      : m.famille_id) ?? null;
+
   const { error } = await supabase
     .from("personnes")
     .update({
@@ -55,8 +69,8 @@ export async function modifier(
       vivant: m.vivant,
       date_naissance: m.date_naissance.trim() || null,
       date_deces: m.date_deces.trim() || null,
-      quartier_id: m.quartier_id,
-      famille_id: m.famille_id,
+      quartier_id: quartierId,
+      famille_id: familleId,
       source: m.source,
       fiabilite: m.fiabilite,
     })
@@ -87,6 +101,11 @@ export async function modifier(
     await supabase
       .from("unions")
       .insert({ conjoint_1: id, conjoint_2: m.conjoint_id, type: "mariage" });
+  }
+
+  await supabase.from("enfants").delete().eq("parent_id", id);
+  for (const enfantId of m.enfants_ids ?? []) {
+    await supabase.from("enfants").insert({ parent_id: id, enfant_id: enfantId });
   }
 
   return { id };

@@ -17,6 +17,7 @@ type Props = {
   avecConjoint?: boolean;
   quartier?: string | null;
   famille?: string | null;
+  surligne?: boolean;
 };
 
 export default function PersonneCarte({
@@ -25,6 +26,7 @@ export default function PersonneCarte({
   avecConjoint,
   quartier,
   famille,
+  surligne,
 }: Props) {
   const mort = p.vivant === false;
   const ancetre = estAncetre(p);
@@ -39,7 +41,8 @@ export default function PersonneCarte({
           : "border-emerald-700/60 hover:border-emerald-700",
         ancetre && !mort && "border-amber-500 shadow-md",
         partenaire && "border-violet-500/70 bg-violet-50/60 hover:border-violet-600",
-        avecConjoint && "border-current/20"
+        avecConjoint && "border-current/20",
+        surligne && "border-amber-500 ring-4 ring-amber-400/70 shadow-lg"
       )}
     >
       {ancetre && (
@@ -117,6 +120,11 @@ export default function PersonneCarte({
       {!partenaire && avecConjoint && (
         <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-violet-700">
           <Heart className="h-3 w-3" aria-hidden /> uni(e)
+        </span>
+      )}
+      {surligne && (
+        <span className="inline-flex items-center gap-1 rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-bold text-white">
+          ✓ trouvé
         </span>
       )}
     </Link>
