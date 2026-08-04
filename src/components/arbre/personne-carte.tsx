@@ -30,6 +30,11 @@ export default function PersonneCarte({
 }: Props) {
   const mort = p.vivant === false;
   const ancetre = estAncetre(p);
+  const photoSrc = p.photo_url
+    ? p.photo_url.startsWith("http")
+      ? p.photo_url
+      : `/photo?p=${encodeURIComponent(p.photo_url)}`
+    : null;
 
   return (
     <Link
@@ -65,7 +70,7 @@ export default function PersonneCarte({
         {p.photo_url ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={p.photo_url}
+            src={photoSrc ?? ""}
             alt={nomComplet(p)}
             className={cn("h-full w-full rounded-lg object-cover", mort && "grayscale")}
           />

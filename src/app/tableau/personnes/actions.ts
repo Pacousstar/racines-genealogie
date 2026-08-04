@@ -13,6 +13,7 @@ export type Modification = {
   date_deces: string;
   quartier_id: string | null;
   famille_id: string | null;
+  photo_url: string | null;
   source: string;
   fiabilite: string;
   pere_id: string | null;
@@ -71,6 +72,7 @@ export async function modifier(
       date_deces: m.date_deces.trim() || null,
       quartier_id: quartierId,
       famille_id: familleId,
+      photo_url: m.photo_url ?? null,
       source: m.source,
       fiabilite: m.fiabilite,
     })

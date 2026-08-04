@@ -3,12 +3,14 @@
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import { Plus, RotateCcw, Loader2, X } from "lucide-react";
+import { Plus, RotateCcw, Loader2, X, Camera } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
 import { declarer } from "@/app/tableau/declarer/actions";
 import { modifier } from "@/app/tableau/personnes/actions";
 import RecherchePersonne, {
   type ResultatPersonne,
 } from "@/components/saisie/recherche-personne";
+import { initiales } from "@/lib/arbre";
 
 type Options = {
   quartiers: { id: string; nom: string }[];
@@ -26,6 +28,7 @@ export type PersonneEdition = {
   date_deces: string | null;
   quartier_id: string | null;
   famille_id: string | null;
+  photo_url: string | null;
   source: string | null;
   fiabilite: string | null;
   pere: ResultatPersonne | null;
@@ -85,6 +88,10 @@ export default function FormulaireDeclaration({
   const [nouveauQuartier, setNouveauQuartier] = useState("");
   const [modeNouvelleFamille, setModeNouvelleFamille] = useState(false);
   const [nouvelleFamille, setNouvelleFamille] = useState("");
+  const [photoUrl, setPhotoUrl] = useState<string | null>(
+    personne?.photo_url ?? null
+  );
+  const [photoEnvoi, setPhotoEnvoi] = useState(false);
   const [source, setSource] = useState(personne?.source ?? "Témoignage du CHO");
   const [fiabilite, setFiabilite] = useState(personne?.fiabilite ?? "confirmé");
   const [provisoireParents, setProvisoireParents] = useState(false);
@@ -105,6 +112,29 @@ export default function FormulaireDeclaration({
   const choisirEnfant =
     (index: number) => (p: ResultatPersonne | null) =>
       setEnfants((liste) => liste.map((e, i) => (i === index ? p : e)));
+
+  const photoSrc = photoUrl
+    ? photoUrl.startsWith("http")
+      ? photoUrl
+      : `/photo?p=${encodeURIComponent(photoUrl)}`
+    : null;
+
+  const choixPhoto = async (fichier: File | undefined) => {
+    if (!fichier || !personne) return;
+    setPhotoEnvoi(true);
+    const supabase = createClient();
+    const nom = fichier.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const chemin = `public/${personne.id}/${Date.now()}-${nom}`;
+    const { error } = await supabase.storage
+      .from("photos")
+      .upload(chemin, fichier);
+    setPhotoEnvoi(false);
+    if (error) {
+      toast.error(`Envoi de la photo impossible : ${error.message}`);
+      return;
+    }
+    setPhotoUrl(chemin);
+  };
 
   const famillesFiltrees = useMemo(() => {
     if (!quartierId) return options.familles;
@@ -131,6 +161,7 @@ export default function FormulaireDeclaration({
       pere_id: pereId,
       mere_id: mereId,
       conjoint_id: conjointId,
+      photo_url: photoUrl || null,
       nouveau_quartier: modeNouveauQuartier ? nouveauQuartier : "",
       nouvelle_famille: modeNouvelleFamille ? nouvelleFamille : "",
       enfants_ids: enfants
@@ -169,6 +200,8 @@ export default function FormulaireDeclaration({
     setNouveauQuartier("");
     setModeNouvelleFamille(false);
     setNouvelleFamille("");
+    setPhotoUrl(personne?.photo_url ?? null);
+    setPhotoEnvoi(false);
     setSource(personne?.source ?? "Témoignage du CHO");
     setFiabilite(personne?.fiabilite ?? "confirmé");
     setProvisoireParents(false);
@@ -316,6 +349,58 @@ export default function FormulaireDeclaration({
             <Radio checked={!vivant} onChange={() => setVivant(false)} label="Décédé" />
           </div>
         </div>
+
+        {edition && personne && (
+          <div className="mt-5 flex flex-wrap items-center gap-4 border-t border-amber-700/20 pt-4">
+            <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-emerald-800 text-2xl font-bold text-white">
+              {photoSrc ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={photoSrc}
+                  alt="Photo de la personne"
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                initiales(personne)
+              )}
+            </div>
+            <div className="min-w-0 flex-1">
+              <span className="text-sm font-medium">Photo</span>
+              <div className="mt-1 flex flex-wrap items-center gap-2">
+                <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-amber-700/40 px-3 py-2 text-sm font-semibold text-amber-800 transition hover:bg-amber-700/10">
+                  {photoEnvoi ? (
+                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                  ) : (
+                    <Camera className="h-4 w-4" aria-hidden />
+                  )}
+                  {photoEnvoi
+                    ? "Envoi en cours…"
+                    : photoUrl
+                      ? "Changer la photo"
+                      : "Choisir une photo"}
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    className="hidden"
+                    onChange={(e) => choixPhoto(e.target.files?.[0])}
+                  />
+                </label>
+                {photoUrl && (
+                  <button
+                    type="button"
+                    onClick={() => setPhotoUrl(null)}
+                    className="inline-flex items-center gap-1 rounded-lg border border-rose-600/40 px-3 py-2 text-sm font-medium text-rose-700 transition hover:bg-rose-600/10"
+                  >
+                    <X className="h-4 w-4" aria-hidden /> Retirer la photo
+                  </button>
+                )}
+              </div>
+              <p className="mt-1 text-xs opacity-60">
+                JPG, PNG ou WebP — 5 Mo maximum.
+              </p>
+            </div>
+          </div>
+        )}
       </fieldset>
 
       <fieldset className="rounded-2xl border border-amber-700/30 bg-amber-50/70 p-5">

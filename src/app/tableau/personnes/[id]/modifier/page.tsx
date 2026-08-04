@@ -46,7 +46,7 @@ export default async function ModifierPersonnePage({
   const { data: personne } = await supabase
     .from("personnes")
     .select(
-      "id,nom,prenom,surnom,sexe,vivant,date_naissance,date_deces,quartier_id,famille_id,source,fiabilite"
+      "id,nom,prenom,surnom,sexe,vivant,date_naissance,date_deces,quartier_id,famille_id,photo_url,source,fiabilite"
     )
     .eq("id", id)
     .single();
@@ -107,6 +107,7 @@ export default async function ModifierPersonnePage({
     date_deces: personne.date_deces,
     quartier_id: personne.quartier_id,
     famille_id: personne.famille_id,
+    photo_url: personne.photo_url,
     source: personne.source,
     fiabilite: personne.fiabilite,
     pere: pere ? parId.get(pere) ?? null : null,

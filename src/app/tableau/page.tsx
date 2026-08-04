@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { LogOut, Users, MapPin, Network, HeartHandshake, FilePenLine, Map, LifeBuoy } from "lucide-react";
+import { LogOut, Users, MapPin, Network, HeartHandshake, FilePenLine, Map, LifeBuoy, Download } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import type { Personne, LienEnfant, Union } from "@/lib/arbre";
 import GrandTableau from "@/components/arbre/grand-tableau";
@@ -105,6 +105,14 @@ export default async function TableauPage() {
           >
             <LifeBuoy className="h-4 w-4" aria-hidden />
             Aides
+          </a>
+          <a
+            href="/tableau/exporter"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-current/20 px-3 py-1.5 font-medium transition hover:bg-current/10"
+            title="Exporter la généalogie (GEDCOM, PDF)"
+          >
+            <Download className="h-4 w-4" aria-hidden />
+            Exporter
           </a>
           {stats.map(({ label, value, Icon }) => (
             <span

@@ -201,14 +201,30 @@ export default async function FichePersonnePage({
         <div className="flex flex-wrap items-start gap-4">
           <div
             className={cn(
-              "flex h-20 w-20 shrink-0 items-center justify-center rounded-xl text-2xl font-bold",
+              "flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl text-2xl font-bold",
               p.vivant === false
                 ? "bg-neutral-300 text-neutral-600"
                 : "bg-emerald-800 text-white"
             )}
             aria-hidden
           >
-            {initiales(p)}
+            {p.photo_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={
+                  p.photo_url.startsWith("http")
+                    ? p.photo_url
+                    : `/photo?p=${encodeURIComponent(p.photo_url)}`
+                }
+                alt={nomComplet(p)}
+                className={cn(
+                  "h-full w-full object-cover",
+                  p.vivant === false && "grayscale"
+                )}
+              />
+            ) : (
+              initiales(p)
+            )}
           </div>
           <div className="min-w-0 flex-1">
             <h1 className="text-2xl font-bold leading-tight">{nomComplet(p)}</h1>
