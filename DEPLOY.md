@@ -101,7 +101,12 @@ Sans cette étape, tout le monde est **lecteur** = ne peut **rien saisir** (c'es
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY` = anon public key
    - `SUPABASE_SERVICE_ROLE_KEY` = service_role key (optionnelle maintenant, nécessaire plus tard)
 5. **Redeploy** (onglet **Deployments** → bouton **Redeploy**, produits).
-6. Adresse obtenue : `https://racines-genealogie.vercel.app` — c'est **à donner à Tahiti**.
+6. Adresse obtenue : `https://racines-genealogie-o2d3.vercel.app` — c'est **à donner à Tahiti**.
+
+> **Supabase → Authentication → URL Configuration** (indispensable pour le lien
+> « Mot de passe oublié ») :
+> - **Site URL** : `https://racines-genealogie-o2d3.vercel.app`
+> - **Redirect URLs** : `https://racines-genealogie-o2d3.vercel.app/**` + `http://localhost:3000/**`
 
 > Rappel : la clé **service_role** ne doit **jamais** apparaître dans le navigateur.
 > Elle est utilisée uniquement par des Server Actions / API route (côté serveur).
