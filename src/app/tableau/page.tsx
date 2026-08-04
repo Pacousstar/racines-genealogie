@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { LogOut, Users, MapPin, Network, HeartHandshake, FilePenLine } from "lucide-react";
+import { LogOut, Users, MapPin, Network, HeartHandshake, FilePenLine, Map } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import type { Personne, LienEnfant, Union } from "@/lib/arbre";
 import GrandTableau from "@/components/arbre/grand-tableau";
@@ -90,6 +90,14 @@ export default async function TableauPage() {
               Déclarer
             </a>
           )}
+          <a
+            href="/tableau/carte"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-amber-700/50 bg-amber-50 px-3 py-1.5 font-semibold text-amber-800 transition hover:bg-amber-100"
+            title="Carte du village"
+          >
+            <Map className="h-4 w-4" aria-hidden />
+            Carte
+          </a>
           {stats.map(({ label, value, Icon }) => (
             <span
               key={label}
