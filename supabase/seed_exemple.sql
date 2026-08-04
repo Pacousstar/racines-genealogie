@@ -64,7 +64,7 @@ VALUES
     -- Mère de Tahidi Denis, arrivée par mariage
     ('INCONNUE', 'Mère de Tahidi', 'F', NULL, NULL, FALSE,
      NULL, NULL,
-     FALSE, 'incertain', 'Témoignage oral'),
+     FALSE, 'en cours', 'Témoignage oral'),
 
     -- Génération vivante (enfant)
     ('DIHI', 'Marc Aurèle', 'M', '1995', NULL, TRUE,

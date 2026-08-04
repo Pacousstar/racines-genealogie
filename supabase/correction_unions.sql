@@ -31,7 +31,7 @@ WHERE id IN (
 
 -- ── 3. Créer la « Mère de Tahidi » si absente
 INSERT INTO personnes (nom, prenom, sexe, vivant, est_ancetre, fiabilite, source)
-SELECT 'INCONNUE', 'Mère de Tahidi', 'F', FALSE, FALSE, 'incertain', 'Témoignage oral'
+SELECT 'INCONNUE', 'Mère de Tahidi', 'F', FALSE, FALSE, 'en cours', 'Témoignage oral'
 WHERE NOT EXISTS (
     SELECT 1 FROM personnes WHERE prenom = 'Mère de Tahidi' AND nom = 'INCONNUE'
 );
