@@ -1,13 +1,20 @@
 "use client";
 
-import { useActionState } from "react";
-import { TreeDeciduous } from "lucide-react";
-import { login, type LoginState } from "./actions";
+import { useActionState, useState } from "react";
+import { TreeDeciduous, ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { login, envoyerLienReset, type LoginState, type ResetState } from "./actions";
 
 const initialState: LoginState = undefined;
+const initialStateReset: ResetState = undefined;
 
 export default function LoginForm() {
   const [state, formAction, pending] = useActionState(login, initialState);
+  const [resetState, resetAction, resetPending] = useActionState(
+    envoyerLienReset,
+    initialStateReset
+  );
+  const [modeReset, setModeReset] = useState(false);
+  const [voirMdp, setVoirMdp] = useState(false);
 
   return (
     <div className="flex min-h-screen items-center justify-center p-6">
@@ -19,52 +26,134 @@ export default function LoginForm() {
           <div>
             <h1 className="text-xl font-bold">Généalogie Toa-Zéo</h1>
             <p className="text-sm opacity-70">
-              L&apos;arbre du village — espace réservé aux membres.
+              {modeReset
+                ? "Réinitialiser le mot de passe"
+                : "L’arbre du village — espace réservé aux membres."}
             </p>
           </div>
         </div>
 
-        <form action={formAction} className="flex flex-col gap-4">
-          <label className="flex flex-col gap-1 text-sm font-medium">
-            Email
+        {modeReset ? (
+          <form action={resetAction} className="flex flex-col gap-4">
+            <label className="flex flex-col gap-1 text-sm font-medium">
+              Email du compte
+              <input
+                type="email"
+                name="email"
+                autoComplete="email"
+                required
+                defaultValue=""
+                className="rounded-lg border px-3 py-2 text-base"
+                placeholder="vous@exemple.fr"
+              />
+            </label>
             <input
-              type="email"
-              name="email"
-              autoComplete="email"
-              required
-              className="rounded-lg border px-3 py-2 text-base"
-              placeholder="vous@exemple.fr"
+              type="hidden"
+              name="origin"
+              defaultValue={typeof window === "undefined" ? "" : window.location.origin}
             />
-          </label>
-          <label className="flex flex-col gap-1 text-sm font-medium">
-            Mot de passe
-            <input
-              type="password"
-              name="password"
-              autoComplete="current-password"
-              required
-              className="rounded-lg border px-3 py-2 text-base"
-              placeholder="••••••••"
-            />
-          </label>
 
-          {state?.erreur && (
-            <p
-              role="alert"
-              className="rounded-lg bg-red-600/15 px-3 py-2 text-sm text-red-700"
+            {resetState?.erreur && (
+              <p
+                role="alert"
+                className="rounded-lg bg-red-600/15 px-3 py-2 text-sm text-red-700"
+              >
+                {resetState.erreur}
+              </p>
+            )}
+            {resetState?.ok && (
+              <p
+                role="status"
+                className="rounded-lg bg-emerald-700/15 px-3 py-2 text-sm text-emerald-800"
+              >
+                Si un compte correspond à cet e-mail, un lien de
+                réinitialisation vient d&apos;être envoyé. Regardez votre
+                boîte de réception.
+              </p>
+            )}
+
+            <button
+              type="submit"
+              disabled={resetPending}
+              className="mt-2 rounded-lg bg-amber-700 px-4 py-2.5 font-semibold text-white transition hover:bg-amber-800 disabled:opacity-60"
             >
-              {state.erreur}
-            </p>
-          )}
+              {resetPending ? "Envoi…" : "Envoyer le lien"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setModeReset(false)}
+              className="inline-flex items-center justify-center gap-1.5 text-sm font-medium opacity-70 transition hover:opacity-100"
+            >
+              <ArrowLeft className="h-4 w-4" aria-hidden /> Retour à la
+              connexion
+            </button>
+          </form>
+        ) : (
+          <form action={formAction} className="flex flex-col gap-4">
+            <label className="flex flex-col gap-1 text-sm font-medium">
+              Email
+              <input
+                type="email"
+                name="email"
+                autoComplete="email"
+                required
+                className="rounded-lg border px-3 py-2 text-base"
+                placeholder="vous@exemple.fr"
+              />
+            </label>
+            <label className="flex flex-col gap-1 text-sm font-medium">
+              Mot de passe
+              <span className="relative">
+                <input
+                  type={voirMdp ? "text" : "password"}
+                  name="password"
+                  autoComplete="current-password"
+                  required
+                  className="w-full rounded-lg border px-3 py-2 pr-10 text-base"
+                  placeholder="••••••••"
+                />
+                <button
+                  type="button"
+                  onClick={() => setVoirMdp((v) => !v)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 transition hover:bg-current/10"
+                  aria-label={voirMdp ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                  title={voirMdp ? "Masquer" : "Afficher"}
+                >
+                  {voirMdp ? (
+                    <EyeOff className="h-4 w-4 opacity-70" aria-hidden />
+                  ) : (
+                    <Eye className="h-4 w-4 opacity-70" aria-hidden />
+                  )}
+                </button>
+              </span>
+            </label>
 
-          <button
-            type="submit"
-            disabled={pending}
-            className="mt-2 rounded-lg bg-amber-700 px-4 py-2.5 font-semibold text-white transition hover:bg-amber-800 disabled:opacity-60"
-          >
-            {pending ? "Connexion…" : "Se connecter"}
-          </button>
-        </form>
+            {state?.erreur && (
+              <p
+                role="alert"
+                className="rounded-lg bg-red-600/15 px-3 py-2 text-sm text-red-700"
+              >
+                {state.erreur}
+              </p>
+            )}
+
+            <button
+              type="submit"
+              disabled={pending}
+              className="mt-2 rounded-lg bg-amber-700 px-4 py-2.5 font-semibold text-white transition hover:bg-amber-800 disabled:opacity-60"
+            >
+              {pending ? "Connexion…" : "Se connecter"}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setModeReset(true)}
+              className="text-center text-sm font-medium opacity-70 transition hover:opacity-100"
+            >
+              Mot de passe oublié ?
+            </button>
+          </form>
+        )}
       </div>
     </div>
   );
