@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowLeft, Map } from "lucide-react";
+import { ArrowLeft, Map, MapPinned } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import CarteVillage from "@/components/arbre/carte-village";
 import Logo from "@/components/branding/logo";
@@ -50,6 +50,14 @@ export default async function CartePage() {
         <span className="rounded-full border border-amber-700/40 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800">
           Plan provisoire — positions à ajuster avec le plan de Toa-Zéo
         </span>
+        <Link
+          href="/tableau/quartiers"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-current/20 px-3 py-1 text-xs font-medium transition hover:bg-current/10"
+          title="Modifier les quartiers"
+        >
+          <MapPinned className="h-3.5 w-3.5" aria-hidden /> Modifier les
+          quartiers
+        </Link>
       </div>
       <p className="-mt-2 text-sm opacity-70">
         Chaque quartier est représenté avec ses familles et le nombre de

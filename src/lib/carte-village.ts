@@ -10,14 +10,12 @@ export const LARGEUR_PLAN = 1000;
 export const HAUTEUR_PLAN = 750;
 
 // Plan provisoire : les positions ci-dessous sont UNIQUEMENT provisoires.
-// Dès que la disposition réelle des quartiers de Toa-Zéo sera connue,
+// Dès que la disposition réelle des quartiers de Toa-Zéo sera connue (à venir),
 // remplacer ces coordonnées (x, y = coin supérieur gauche du quartier).
 export const POSITIONS_QUARTIERS: PositionQuartier[] = [
-  { nom: "Quartier Centre", x: 340, y: 250, largeur: 300, hauteur: 200 },
-  { nom: "Quartier Nord", x: 340, y: 40, largeur: 300, hauteur: 160 },
-  { nom: "Quartier Sud", x: 340, y: 500, largeur: 300, hauteur: 170 },
-  { nom: "Quartier Est", x: 700, y: 250, largeur: 250, hauteur: 200 },
-  { nom: "Quartier Fondateurs", x: 50, y: 250, largeur: 240, hauteur: 200 },
-  { nom: "Gbéya", x: 50, y: 500, largeur: 240, hauteur: 160 },
-  { nom: "Bonyé", x: 700, y: 40, largeur: 250, hauteur: 160 },
+  { nom: "Gaho", x: 360, y: 250, largeur: 280, hauteur: 190 },
+  { nom: "Bogné", x: 360, y: 40, largeur: 280, hauteur: 150 },
+  { nom: "Bogné-Zagna", x: 690, y: 70, largeur: 260, hauteur: 150 },
+  { nom: "Gbéha", x: 60, y: 260, largeur: 240, hauteur: 190 },
+  { nom: "Zouahé", x: 360, y: 500, largeur: 280, hauteur: 180 },
 ];

@@ -40,9 +40,14 @@ export async function envoyerLienReset(
   if (!email) return { erreur: "Saisissez votre adresse e-mail." };
 
   const h = await headers();
-  const proto = h.get("x-forwarded-proto") ?? "https";
-  const hote = h.get("x-forwarded-host") ?? h.get("host");
-  const origin = hote ? `${proto}://${hote}` : "";
+  const proto = (h.get("x-forwarded-proto") ?? "https")
+    .split(",")[0]
+    .trim();
+  const hote = (h.get("x-forwarded-host") ?? h.get("host") ?? "")
+    .split(",")[0]
+    .trim();
+  const origin =
+    (hote ? `${proto}://${hote}` : "") || process.env.NEXT_PUBLIC_SITE_URL || "";
 
   const options = origin
     ? { redirectTo: `${origin}/reinitialiser` }
