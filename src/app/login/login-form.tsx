@@ -1,8 +1,9 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { TreeDeciduous, ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { login, envoyerLienReset, type LoginState, type ResetState } from "./actions";
+import Logo from "@/components/branding/logo";
 
 const initialState: LoginState = undefined;
 const initialStateReset: ResetState = undefined;
@@ -20,9 +21,7 @@ export default function LoginForm() {
     <div className="flex min-h-screen items-center justify-center p-6">
       <div className="w-full max-w-sm rounded-2xl border border-current/10 bg-current/0 p-8 shadow-lg">
         <div className="mb-6 flex flex-col items-center gap-3 text-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-amber-700 text-emerald-50">
-            <TreeDeciduous className="h-8 w-8" aria-hidden />
-          </div>
+          <Logo />
           <div>
             <h1 className="text-xl font-bold">Généalogie Toa-Zéo</h1>
             <p className="text-sm opacity-70">
@@ -47,11 +46,6 @@ export default function LoginForm() {
                 placeholder="vous@exemple.fr"
               />
             </label>
-            <input
-              type="hidden"
-              name="origin"
-              defaultValue={typeof window === "undefined" ? "" : window.location.origin}
-            />
 
             {resetState?.erreur && (
               <p

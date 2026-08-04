@@ -3,6 +3,7 @@ import { LogOut, Users, MapPin, Network, HeartHandshake, FilePenLine, Map, LifeB
 import { createClient } from "@/lib/supabase/server";
 import type { Personne, LienEnfant, Union } from "@/lib/arbre";
 import GrandTableau from "@/components/arbre/grand-tableau";
+import Logo from "@/components/branding/logo";
 import { logout } from "./actions";
 
 export const metadata: Metadata = { title: "Le Grand Tableau" };
@@ -70,6 +71,7 @@ export default async function TableauPage() {
   return (
     <div className="flex h-dvh flex-col">
       <header className="flex flex-wrap items-center gap-4 border-b border-current/10 px-4 py-3 sm:px-6">
+        <Logo />
         <div className="min-w-0">
           <h1 className="text-lg font-bold leading-tight sm:text-xl">
             Le Grand Tableau

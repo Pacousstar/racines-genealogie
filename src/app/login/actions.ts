@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 
 export type LoginState = { erreur?: string } | undefined;
@@ -38,7 +39,11 @@ export async function envoyerLienReset(
   const email = String(formData.get("email") ?? "").trim();
   if (!email) return { erreur: "Saisissez votre adresse e-mail." };
 
-  const origin = String(formData.get("origin") ?? "").trim();
+  const h = await headers();
+  const proto = h.get("x-forwarded-proto") ?? "https";
+  const hote = h.get("x-forwarded-host") ?? h.get("host");
+  const origin = hote ? `${proto}://${hote}` : "";
+
   const options = origin
     ? { redirectTo: `${origin}/reinitialiser` }
     : undefined;

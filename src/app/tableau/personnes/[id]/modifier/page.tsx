@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import FormulaireDeclaration, {
   type PersonneEdition,
 } from "@/components/saisie/formulaire-declaration";
+import Logo from "@/components/branding/logo";
 import type { ResultatPersonne } from "@/components/saisie/recherche-personne";
 
 export const metadata: Metadata = { title: "Modifier la personne" };
@@ -43,13 +44,48 @@ export default async function ModifierPersonnePage({
     );
   }
 
-  const { data: personne } = await supabase
-    .from("personnes")
-    .select(
-      "id,nom,prenom,surnom,sexe,vivant,date_naissance,date_deces,quartier_id,famille_id,photo_url,source,fiabilite"
-    )
-    .eq("id", id)
-    .single();
+  const CHAMPS_BASE =
+    "id,nom,prenom,surnom,sexe,vivant,date_naissance,date_deces,quartier_id,famille_id,photo_url,source,fiabilite";
+
+  const { data: personne } = (await (async () => {
+    const essai = await supabase
+      .from("personnes")
+      .select(`${CHAMPS_BASE},retraite,residence,crise_2010_2011`)
+      .eq("id", id)
+      .single();
+    if (!essai.error) return essai;
+    if (/column .* does not exist|could not find/i.test(essai.error.message)) {
+      return supabase
+        .from("personnes")
+        .select(CHAMPS_BASE)
+        .eq("id", id)
+        .single();
+    }
+    return essai;
+  })()) as {
+    data:
+      | ({
+          id: string;
+          nom: string;
+          prenom: string | null;
+          surnom: string | null;
+          sexe: string | null;
+          vivant: boolean;
+          date_naissance: string | null;
+          date_deces: string | null;
+          quartier_id: string | null;
+          famille_id: string | null;
+          photo_url: string | null;
+          source: string | null;
+          fiabilite: string | null;
+        } & {
+          retraite?: boolean | null;
+          residence?: string | null;
+          crise_2010_2011?: boolean | null;
+        })
+      | null;
+    error: { message: string } | null;
+  };
 
   if (!personne) notFound();
 
@@ -110,6 +146,9 @@ export default async function ModifierPersonnePage({
     photo_url: personne.photo_url,
     source: personne.source,
     fiabilite: personne.fiabilite,
+    retraite: personne.retraite ?? false,
+    residence: personne.residence ?? null,
+    crise_2010_2011: personne.crise_2010_2011 ?? false,
     pere: pere ? parId.get(pere) ?? null : null,
     mere: mere ? parId.get(mere) ?? null : null,
     conjoint: conjointId ? parId.get(conjointId) ?? null : null,
@@ -120,12 +159,15 @@ export default async function ModifierPersonnePage({
 
   return (
     <main className="mx-auto max-w-3xl p-4 sm:p-6">
-      <Link
-        href={`/tableau/personnes/${id}`}
-        className="inline-flex items-center gap-1.5 text-sm font-medium opacity-80 transition hover:opacity-100"
-      >
-        <ArrowLeft className="h-4 w-4" aria-hidden /> Retour à la fiche
-      </Link>
+      <div className="flex items-center gap-3">
+        <Logo />
+        <Link
+          href={`/tableau/personnes/${id}`}
+          className="inline-flex items-center gap-1.5 text-sm font-medium opacity-80 transition hover:opacity-100"
+        >
+          <ArrowLeft className="h-4 w-4" aria-hidden /> Retour à la fiche
+        </Link>
+      </div>
 
       <h1 className="mt-3 mb-1 text-2xl font-bold">✏ Modifier la personne</h1>
       <p className="mb-6 text-sm opacity-70">

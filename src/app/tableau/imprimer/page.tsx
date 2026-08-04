@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { nomComplet, periode } from "@/lib/arbre";
 import BoutonImprimer from "./bouton-imprimer";
+import Logo from "@/components/branding/logo";
 
 export const metadata: Metadata = { title: "Version papier de la généalogie" };
 export const dynamic = "force-dynamic";
@@ -118,15 +119,20 @@ export default async function ImprimerPage() {
         <BoutonImprimer />
       </div>
 
-      <header className="mb-6 border-b-2 border-amber-700 pb-3">
-        <h1 className="text-2xl font-bold">
-          Généalogie Toa-Zéo — le Grand Tableau
-        </h1>
-        <p className="text-sm opacity-70">
-          Document édité le {new Date().toLocaleDateString("fr-FR")} ·{" "}
-          {personnes.length} personnes · {unions.length} unions ·{" "}
-          {quartiers.length} quartiers
-        </p>
+      <header className="mb-6 flex items-center gap-3 border-b-2 border-amber-700 pb-3">
+        <div className="hidden print:block">
+          <Logo />
+        </div>
+        <div>
+          <h1 className="text-2xl font-bold">
+            Généalogie Toa-Zéo — le Grand Tableau
+          </h1>
+          <p className="text-sm opacity-70">
+            Document édité le {new Date().toLocaleDateString("fr-FR")} ·{" "}
+            {personnes.length} personnes · {unions.length} unions ·{" "}
+            {quartiers.length} quartiers
+          </p>
+        </div>
       </header>
 
       {groupes.map(({ quartier, familles: famillesGroupe, sansFamille }) => (

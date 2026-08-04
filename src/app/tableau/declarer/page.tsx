@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import FormulaireDeclaration from "@/components/saisie/formulaire-declaration";
+import Logo from "@/components/branding/logo";
 
 export const metadata: Metadata = { title: "Déclarer une personne" };
 export const dynamic = "force-dynamic";
@@ -40,12 +41,15 @@ export default async function DeclarerPage() {
 
   return (
     <main className="mx-auto max-w-3xl p-4 sm:p-6">
-      <Link
-        href="/tableau"
-        className="inline-flex items-center gap-1.5 text-sm font-medium opacity-80 transition hover:opacity-100"
-      >
-        <ArrowLeft className="h-4 w-4" aria-hidden /> Retour au tableau
-      </Link>
+      <div className="flex items-center gap-3">
+        <Logo />
+        <Link
+          href="/tableau"
+          className="inline-flex items-center gap-1.5 text-sm font-medium opacity-80 transition hover:opacity-100"
+        >
+          <ArrowLeft className="h-4 w-4" aria-hidden /> Retour au tableau
+        </Link>
+      </div>
 
       <h1 className="mt-3 mb-1 text-2xl font-bold">+ Déclarer une personne</h1>
       <p className="mb-6 text-sm opacity-70">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { Plus, RotateCcw, Loader2, X, Camera } from "lucide-react";
@@ -31,6 +31,9 @@ export type PersonneEdition = {
   photo_url: string | null;
   source: string | null;
   fiabilite: string | null;
+  retraite: boolean;
+  residence: string | null;
+  crise_2010_2011: boolean;
   pere: ResultatPersonne | null;
   mere: ResultatPersonne | null;
   conjoint: ResultatPersonne | null;
@@ -39,6 +42,12 @@ export type PersonneEdition = {
 
 const SOURCES = ["Témoignage du CHO", "Registre", "Document", "Autre"];
 const FIABILITES = ["confirmé", "probable", "en cours"];
+
+const styleEncart =
+  "rounded-2xl border-2 border-amber-600/50 bg-amber-100/80 p-5";
+const styleLegende =
+  "px-2 text-sm font-bold uppercase tracking-wide text-amber-800";
+const styleCase = "h-4 w-4 accent-amber-700";
 
 function Radio({
   checked,
@@ -64,6 +73,70 @@ function Radio({
   );
 }
 
+type DetailLien = { decede: boolean; dateDeces: string };
+type EnfantLigne = {
+  personne: ResultatPersonne | null;
+  naissance: string;
+  decede: boolean;
+  deces: string;
+};
+
+const detailDe = (p: ResultatPersonne | null): DetailLien => ({
+  decede: Boolean(p && p.vivant === false),
+  dateDeces: p?.date_deces ?? "",
+});
+
+const ligneDe = (p: ResultatPersonne | null): EnfantLigne => ({
+  personne: p,
+  naissance: p?.date_naissance ?? "",
+  decede: Boolean(p && p.vivant === false),
+  deces: p?.date_deces ?? "",
+});
+
+function GroupeLien({
+  label,
+  valeurInitiale,
+  detail,
+  onChangePersonne,
+  onChangeDetail,
+  surlignage,
+}: {
+  label: string;
+  valeurInitiale: ResultatPersonne | null;
+  detail: DetailLien;
+  onChangePersonne: (p: ResultatPersonne | null) => void;
+  onChangeDetail: (d: DetailLien) => void;
+  surlignage?: string;
+}) {
+  return (
+    <div className={`relative rounded-xl border p-2 ${surlignage ?? "border-current/10"}`}>
+      <RecherchePersonne
+        label={label}
+        valeurInitiale={valeurInitiale}
+        onChange={onChangePersonne}
+      />
+      <label className="mt-2 flex items-center gap-2 text-sm">
+        <input
+          type="checkbox"
+          checked={detail.decede}
+          onChange={(e) => onChangeDetail({ ...detail, decede: e.target.checked })}
+          className={styleCase}
+        />
+        <span className="font-medium">Décédé(e)</span>
+      </label>
+      {detail.decede && (
+        <input
+          type="text"
+          value={detail.dateDeces}
+          onChange={(e) => onChangeDetail({ ...detail, dateDeces: e.target.value })}
+          placeholder="Date du décès (ex. « 2011 »)"
+          className="mt-1 w-full rounded-lg border px-3 py-2 text-sm"
+        />
+      )}
+    </div>
+  );
+}
+
 export default function FormulaireDeclaration({
   options,
   personne,
@@ -72,7 +145,7 @@ export default function FormulaireDeclaration({
   personne?: PersonneEdition | null;
 }) {
   const router = useRouter();
-  const [pending, startTransition] = useTransition();
+  const [enregistrement, setEnregistrement] = useState(false);
   const edition = Boolean(personne);
 
   const [nom, setNom] = useState(personne?.nom ?? "");
@@ -82,6 +155,9 @@ export default function FormulaireDeclaration({
   const [vivant, setVivant] = useState(personne ? (personne.vivant ?? true) : true);
   const [dateNaissance, setDateNaissance] = useState(personne?.date_naissance ?? "");
   const [dateDeces, setDateDeces] = useState(personne?.date_deces ?? "");
+  const [retraite, setRetraite] = useState(personne?.retraite ?? false);
+  const [residence, setResidence] = useState(personne?.residence ?? "");
+  const [crise2010, setCrise2010] = useState(personne?.crise_2010_2011 ?? false);
   const [quartierId, setQuartierId] = useState(personne?.quartier_id ?? "");
   const [familleId, setFamilleId] = useState(personne?.famille_id ?? "");
   const [modeNouveauQuartier, setModeNouveauQuartier] = useState(false);
@@ -93,6 +169,7 @@ export default function FormulaireDeclaration({
   );
   const [photoEnvoi, setPhotoEnvoi] = useState(false);
   const [source, setSource] = useState(personne?.source ?? "Témoignage du CHO");
+  const [sourceDetail, setSourceDetail] = useState("");
   const [fiabilite, setFiabilite] = useState(personne?.fiabilite ?? "confirmé");
   const [provisoireParents, setProvisoireParents] = useState(false);
   const [pereId, setPereId] = useState<string | null>(personne?.pere?.id ?? null);
@@ -100,18 +177,38 @@ export default function FormulaireDeclaration({
   const [conjointId, setConjointId] = useState<string | null>(
     personne?.conjoint?.id ?? null
   );
-  const [enfants, setEnfants] = useState<(ResultatPersonne | null)[]>(
-    personne?.enfants?.length ? [...personne.enfants] : []
+  const [pereDetail, setPereDetail] = useState<DetailLien>(
+    detailDe(personne?.pere ?? null)
+  );
+  const [mereDetail, setMereDetail] = useState<DetailLien>(
+    detailDe(personne?.mere ?? null)
+  );
+  const [conjointDetail, setConjointDetail] = useState<DetailLien>(
+    detailDe(personne?.conjoint ?? null)
+  );
+  const [enfants, setEnfants] = useState<EnfantLigne[]>(
+    (personne?.enfants ?? []).map(ligneDe)
   );
 
-  const ajouterEnfant = () => setEnfants((liste) => [...liste, null]);
+  const ajouterEnfant = () => setEnfants((liste) => [...liste, ligneDe(null)]);
 
   const retirerEnfant = (index: number) =>
     setEnfants((liste) => liste.filter((_, i) => i !== index));
 
   const choisirEnfant =
     (index: number) => (p: ResultatPersonne | null) =>
-      setEnfants((liste) => liste.map((e, i) => (i === index ? p : e)));
+      setEnfants((liste) =>
+        liste.map((l, i) => (i === index ? ligneDe(p) : l))
+      );
+
+  const majEnfant = (index: number, patch: Partial<EnfantLigne>) =>
+    setEnfants((liste) =>
+      liste.map((l, i) => (i === index ? { ...l, ...patch } : l))
+    );
+
+  const sourceFinale = sourceDetail.trim()
+    ? `${source} — ${sourceDetail.trim()}`
+    : source;
 
   const photoSrc = photoUrl
     ? photoUrl.startsWith("http")
@@ -123,8 +220,8 @@ export default function FormulaireDeclaration({
     if (!fichier || !personne) return;
     setPhotoEnvoi(true);
     const supabase = createClient();
-    const nom = fichier.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-    const chemin = `public/${personne.id}/${Date.now()}-${nom}`;
+    const name = fichier.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const chemin = `public/${personne.id}/${Date.now()}-${name}`;
     const { error } = await supabase.storage
       .from("photos")
       .upload(chemin, fichier);
@@ -141,49 +238,65 @@ export default function FormulaireDeclaration({
     return options.familles.filter((f) => f.quartier_id === quartierId);
   }, [options.familles, quartierId]);
 
-  const soumettre = () => {
+  const soumettre = async () => {
     if (!nom.trim()) {
       toast.error("Le nom est obligatoire.");
       return;
     }
-    const donnees = {
-      nom,
-      prenom,
-      surnom,
-      sexe,
-      vivant,
-      date_naissance: dateNaissance,
-      date_deces: dateDeces,
-      quartier_id: quartierId || null,
-      famille_id: familleId || null,
-      source,
-      fiabilite,
-      pere_id: pereId,
-      mere_id: mereId,
-      conjoint_id: conjointId,
-      photo_url: photoUrl || null,
-      nouveau_quartier: modeNouveauQuartier ? nouveauQuartier : "",
-      nouvelle_famille: modeNouvelleFamille ? nouvelleFamille : "",
-      enfants_ids: enfants
-        .filter((e): e is ResultatPersonne => e !== null)
-        .map((e) => e.id),
-    };
-    startTransition(async () => {
+    setEnregistrement(true);
+    try {
+      const donnees = {
+        nom,
+        prenom,
+        surnom,
+        sexe,
+        vivant,
+        date_naissance: dateNaissance,
+        date_deces: dateDeces,
+        quartier_id: quartierId || null,
+        famille_id: familleId || null,
+        source: sourceFinale,
+        fiabilite,
+        pere_id: pereId,
+        mere_id: mereId,
+        conjoint_id: conjointId,
+        photo_url: photoUrl || null,
+        nouveau_quartier: modeNouveauQuartier ? nouveauQuartier : "",
+        nouvelle_famille: modeNouvelleFamille ? nouvelleFamille : "",
+        retraite,
+        residence,
+        crise_2010_2011: crise2010,
+        pere: pereId ? pereDetail : null,
+        mere: mereId ? mereDetail : null,
+        conjoint: conjointId ? conjointDetail : null,
+        enfants: enfants.filter((l) => l.personne).map((l) => ({
+          id: l.personne!.id,
+          date_naissance: l.naissance,
+          decede: l.decede,
+          date_deces: l.deces,
+        })),
+      };
       const res = edition && personne
         ? await modifier(personne.id, donnees)
         : await declarer({ ...donnees, provisoireParents });
       if (res.erreur) {
         toast.error(res.erreur);
+        setEnregistrement(false);
         return;
       }
-      if (res.id) {
-        toast.success(
-          edition ? "Modifications enregistrées." : "Personne enregistrée dans le tableau."
-        );
-        router.push(`/tableau/personnes/${res.id}`);
-        router.refresh();
-      }
-    });
+      toast.success(
+        edition
+          ? "Modifications enregistrées."
+          : "Personne enregistrée dans le tableau."
+      );
+      router.push(`/tableau/personnes/${res.id}`);
+      router.refresh();
+    } catch (e) {
+      toast.error(
+        `Une erreur est survenue : ${e instanceof Error ? e.message : "inconnue"}`
+      );
+      setEnregistrement(false);
+    }
   };
 
   const reinit = () => {
@@ -194,6 +307,9 @@ export default function FormulaireDeclaration({
     setVivant(personne ? (personne.vivant ?? true) : true);
     setDateNaissance(personne?.date_naissance ?? "");
     setDateDeces(personne?.date_deces ?? "");
+    setRetraite(personne?.retraite ?? false);
+    setResidence(personne?.residence ?? "");
+    setCrise2010(personne?.crise_2010_2011 ?? false);
     setQuartierId(personne?.quartier_id ?? "");
     setFamilleId(personne?.famille_id ?? "");
     setModeNouveauQuartier(false);
@@ -203,12 +319,16 @@ export default function FormulaireDeclaration({
     setPhotoUrl(personne?.photo_url ?? null);
     setPhotoEnvoi(false);
     setSource(personne?.source ?? "Témoignage du CHO");
+    setSourceDetail("");
     setFiabilite(personne?.fiabilite ?? "confirmé");
     setProvisoireParents(false);
     setPereId(personne?.pere?.id ?? null);
     setMereId(personne?.mere?.id ?? null);
     setConjointId(personne?.conjoint?.id ?? null);
-    setEnfants(personne?.enfants?.length ? [...personne.enfants] : []);
+    setPereDetail(detailDe(personne?.pere ?? null));
+    setMereDetail(detailDe(personne?.mere ?? null));
+    setConjointDetail(detailDe(personne?.conjoint ?? null));
+    setEnfants((personne?.enfants ?? []).map(ligneDe));
   };
 
   const champ = (label: string, value: string, set: (v: string) => void) => (
@@ -324,14 +444,12 @@ export default function FormulaireDeclaration({
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        soumettre();
+        void soumettre();
       }}
       className="flex flex-col gap-5"
     >
-      <fieldset className="rounded-2xl border border-amber-700/30 bg-amber-50/70 p-5">
-        <legend className="px-2 text-sm font-bold uppercase tracking-wide text-amber-800">
-          1 · Qui ?
-        </legend>
+      <fieldset className={styleEncart}>
+        <legend className={styleLegende}>1 · Qui ?</legend>
         <div className="grid gap-4 sm:grid-cols-3">
           {champ("Nom *", nom, setNom)}
           {champ("Prénom", prenom, setPrenom)}
@@ -349,9 +467,21 @@ export default function FormulaireDeclaration({
             <Radio checked={!vivant} onChange={() => setVivant(false)} label="Décédé" />
           </div>
         </div>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={retraite}
+              onChange={(e) => setRetraite(e.target.checked)}
+              className={styleCase}
+            />
+            <span className="font-medium">Retraité(e)</span>
+          </label>
+          {champ("Résidence (quartier habité)", residence, setResidence)}
+        </div>
 
         {edition && personne && (
-          <div className="mt-5 flex flex-wrap items-center gap-4 border-t border-amber-700/20 pt-4">
+          <div className="mt-5 flex flex-wrap items-center gap-4 border-t border-amber-700/30 pt-4">
             <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-emerald-800 text-2xl font-bold text-white">
               {photoSrc ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -403,45 +533,69 @@ export default function FormulaireDeclaration({
         )}
       </fieldset>
 
-      <fieldset className="rounded-2xl border border-amber-700/30 bg-amber-50/70 p-5">
-        <legend className="px-2 text-sm font-bold uppercase tracking-wide text-amber-800">
-          2 · Dates (texte libre)
-        </legend>
+      <fieldset className={styleEncart}>
+        <legend className={styleLegende}>2 · Dates (texte libre)</legend>
         <div className="grid gap-4 sm:grid-cols-2">
           {champ("Naissance (ex. « vers 1890 »)", dateNaissance, setDateNaissance)}
-          {!vivant && champ("Décès", dateDeces, setDateDeces)}
+          {champ("Décès", dateDeces, setDateDeces)}
         </div>
+        <label className="mt-4 flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={crise2010}
+            onChange={(e) => setCrise2010(e.target.checked)}
+            className={styleCase}
+          />
+          <span className="font-medium">
+            Décès durant la crise 2010-2011
+          </span>
+        </label>
       </fieldset>
 
-      <fieldset className="rounded-2xl border border-amber-700/30 bg-amber-50/70 p-5">
-        <legend className="px-2 text-sm font-bold uppercase tracking-wide text-amber-800">
-          3 · Lieu
-        </legend>
+      <fieldset className={styleEncart}>
+        <legend className={styleLegende}>3 · Lieu</legend>
         <div className="grid gap-4 sm:grid-cols-2">
           {selectQuartiers}
           {selectFamilles}
         </div>
+        <p className="mt-3 text-xs opacity-60">
+          Le conjoint(e) peut appartenir à n&apos;importe quel quartier ou
+          famille du village — la recherche le trouvera partout.
+        </p>
       </fieldset>
 
-      <fieldset className="rounded-2xl border border-amber-700/30 bg-amber-50/70 p-5">
-        <legend className="px-2 text-sm font-bold uppercase tracking-wide text-amber-800">
-          4 · Liens
-        </legend>
+      <fieldset className={styleEncart}>
+        <legend className={styleLegende}>4 · Liens</legend>
         <div className="grid gap-4 sm:grid-cols-3">
-          <RecherchePersonne
+          <GroupeLien
             label="Père"
             valeurInitiale={personne?.pere ?? null}
-            onChange={(p) => setPereId(p ? p.id : null)}
+            detail={pereDetail}
+            onChangePersonne={(p) => {
+              setPereId(p ? p.id : null);
+              setPereDetail(detailDe(p));
+            }}
+            onChangeDetail={setPereDetail}
           />
-          <RecherchePersonne
+          <GroupeLien
             label="Mère"
             valeurInitiale={personne?.mere ?? null}
-            onChange={(p) => setMereId(p ? p.id : null)}
+            detail={mereDetail}
+            onChangePersonne={(p) => {
+              setMereId(p ? p.id : null);
+              setMereDetail(detailDe(p));
+            }}
+            onChangeDetail={setMereDetail}
           />
-          <RecherchePersonne
+          <GroupeLien
             label="Conjoint(e)"
             valeurInitiale={personne?.conjoint ?? null}
-            onChange={(p) => setConjointId(p ? p.id : null)}
+            detail={conjointDetail}
+            onChangePersonne={(p) => {
+              setConjointId(p ? p.id : null);
+              setConjointDetail(detailDe(p));
+            }}
+            onChangeDetail={setConjointDetail}
           />
         </div>
         {!edition && (
@@ -460,7 +614,7 @@ export default function FormulaireDeclaration({
           </label>
         )}
 
-        <div className="mt-5 border-t border-amber-700/20 pt-4">
+        <div className="mt-5 border-t border-amber-700/30 pt-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <span className="text-sm font-medium">
               Enfants de cette personne
@@ -478,23 +632,57 @@ export default function FormulaireDeclaration({
               Aucun enfant relié pour l&apos;instant.
             </p>
           ) : (
-            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <div className="mt-3 grid gap-3 lg:grid-cols-2">
               {enfants.map((enfant, index) => (
-                <div key={index} className="relative">
-                  <RecherchePersonne
-                    label={`Enfant n° ${index + 1}`}
-                    valeurInitiale={enfant ?? null}
-                    onChange={choisirEnfant(index)}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => retirerEnfant(index)}
-                    className="absolute -right-2 -top-2 z-10 rounded-full bg-rose-600 p-1 text-white shadow transition hover:bg-rose-700"
-                    aria-label={`Retirer l'enfant n° ${index + 1}`}
-                    title="Retirer"
-                  >
-                    <X className="h-3 w-3" aria-hidden />
-                  </button>
+                <div
+                  key={index}
+                  className="relative rounded-xl border border-amber-600/30 bg-amber-100/50 p-3"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <RecherchePersonne
+                        label={`Enfant n° ${index + 1}`}
+                        valeurInitiale={enfant.personne ?? null}
+                        onChange={choisirEnfant(index)}
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => retirerEnfant(index)}
+                      className="rounded bg-rose-600 p-1 text-white shadow transition hover:bg-rose-700"
+                      aria-label={`Retirer l'enfant n° ${index + 1}`}
+                      title="Retirer"
+                    >
+                      <X className="h-3.5 w-3.5" aria-hidden />
+                    </button>
+                  </div>
+                  <div className="mt-2 grid gap-2">
+                    <input
+                      type="text"
+                      value={enfant.naissance}
+                      onChange={(e) => majEnfant(index, { naissance: e.target.value })}
+                      placeholder="Date de naissance de l'enfant (ex. « vers 1980 »)"
+                      className="w-full rounded-lg border px-3 py-2 text-sm"
+                    />
+                    <label className="flex items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={enfant.decede}
+                        onChange={(e) => majEnfant(index, { decede: e.target.checked })}
+                        className={styleCase}
+                      />
+                      <span className="font-medium">Décédé(e)</span>
+                    </label>
+                    {enfant.decede && (
+                      <input
+                        type="text"
+                        value={enfant.deces}
+                        onChange={(e) => majEnfant(index, { deces: e.target.value })}
+                        placeholder="Date du décès (ex. « 2011 »)"
+                        className="w-full rounded-lg border px-3 py-2 text-sm"
+                      />
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -502,16 +690,26 @@ export default function FormulaireDeclaration({
         </div>
       </fieldset>
 
-      <fieldset className="rounded-2xl border border-amber-700/30 bg-amber-50/70 p-5">
-        <legend className="px-2 text-sm font-bold uppercase tracking-wide text-amber-800">
-          5 · Source & fiabilité
-        </legend>
+      <fieldset className={styleEncart}>
+        <legend className={styleLegende}>5 · Source & fiabilité</legend>
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-sm font-medium">Source :</span>
           {SOURCES.map((s) => (
             <Radio key={s} checked={source === s} onChange={() => setSource(s)} label={s} />
           ))}
         </div>
+        <label className="mt-3 flex flex-col gap-1 text-sm">
+          <span className="font-medium">
+            Préciser la source (n° registre, folio, document, témoin…)
+          </span>
+          <input
+            type="text"
+            value={sourceDetail}
+            onChange={(e) => setSourceDetail(e.target.value)}
+            placeholder="Ex. « registre des naissances, folio 12 »"
+            className="rounded-lg border px-3 py-2 text-base"
+          />
+        </label>
         <label className="mt-4 flex items-center gap-2 text-sm">
           <span className="font-medium">Fiabilité :</span>
           <select
@@ -531,10 +729,10 @@ export default function FormulaireDeclaration({
       <div className="flex flex-wrap items-center gap-3">
         <button
           type="submit"
-          disabled={pending}
+          disabled={enregistrement}
           className="inline-flex items-center gap-2 rounded-lg bg-emerald-700 px-6 py-3 text-base font-bold text-white transition hover:bg-emerald-800 disabled:opacity-60"
         >
-          {pending ? (
+          {enregistrement ? (
             <Loader2 className="h-5 w-5 animate-spin" aria-hidden />
           ) : (
             <Plus className="h-5 w-5" aria-hidden />
@@ -544,7 +742,7 @@ export default function FormulaireDeclaration({
         <button
           type="button"
           onClick={reinit}
-          disabled={pending}
+          disabled={enregistrement}
           className="inline-flex items-center gap-2 rounded-lg border border-color/20 px-5 py-3 font-medium transition hover:bg-current/5 disabled:opacity-60"
         >
           <RotateCcw className="h-5 w-5" aria-hidden />

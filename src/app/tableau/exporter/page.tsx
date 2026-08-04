@@ -6,6 +6,7 @@ import {
   Printer,
   Info,
 } from "lucide-react";
+import Logo from "@/components/branding/logo";
 
 export const metadata: Metadata = { title: "Exporter la généalogie" };
 export const dynamic = "force-dynamic";
@@ -13,12 +14,15 @@ export const dynamic = "force-dynamic";
 export default async function ExporterPage() {
   return (
     <main className="mx-auto flex max-w-2xl flex-col gap-4 p-4 sm:p-6">
-      <Link
-        href="/tableau"
-        className="inline-flex items-center gap-1.5 text-sm font-medium opacity-80 transition hover:opacity-100"
-      >
-        <ArrowLeft className="h-4 w-4" aria-hidden /> Retour au Grand Tableau
-      </Link>
+      <div className="flex items-center gap-3">
+        <Logo />
+        <Link
+          href="/tableau"
+          className="inline-flex items-center gap-1.5 text-sm font-medium opacity-80 transition hover:opacity-100"
+        >
+          <ArrowLeft className="h-4 w-4" aria-hidden /> Retour au Grand Tableau
+        </Link>
+      </div>
 
       <div>
         <h1 className="flex items-center gap-2 text-2xl font-bold">

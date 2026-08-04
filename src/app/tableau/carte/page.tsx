@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowLeft, Map } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import CarteVillage from "@/components/arbre/carte-village";
+import Logo from "@/components/branding/logo";
 import {
   COULEURS_QUARTIERS,
   type CouleurQuartier,
@@ -31,12 +32,15 @@ export default async function CartePage() {
 
   return (
     <main className="mx-auto flex max-w-5xl flex-col gap-4 p-4 sm:p-6">
-      <Link
-        href="/tableau"
-        className="inline-flex items-center gap-1.5 text-sm font-medium opacity-80 transition hover:opacity-100"
-      >
-        <ArrowLeft className="h-4 w-4" aria-hidden /> Retour au Grand Tableau
-      </Link>
+      <div className="flex items-center gap-3">
+        <Logo />
+        <Link
+          href="/tableau"
+          className="inline-flex items-center gap-1.5 text-sm font-medium opacity-80 transition hover:opacity-100"
+        >
+          <ArrowLeft className="h-4 w-4" aria-hidden /> Retour au Grand Tableau
+        </Link>
+      </div>
 
       <div className="flex flex-wrap items-center gap-3">
         <h1 className="flex items-center gap-2 text-2xl font-bold">

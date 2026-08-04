@@ -2,9 +2,10 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { TreeDeciduous, KeyRound, Loader2, Eye, EyeOff } from "lucide-react";
+import { KeyRound, Loader2, Eye, EyeOff } from "lucide-react";
 import toast from "react-hot-toast";
 import { createClient } from "@/lib/supabase/client";
+import Logo from "@/components/branding/logo";
 
 export default function ReinitialiserPage() {
   const router = useRouter();
@@ -60,9 +61,7 @@ export default function ReinitialiserPage() {
     <div className="flex min-h-screen items-center justify-center p-6">
       <div className="w-full max-w-sm rounded-2xl border border-current/10 bg-current/0 p-8 shadow-lg">
         <div className="mb-6 flex flex-col items-center gap-3 text-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-amber-700 text-emerald-50">
-            <TreeDeciduous className="h-8 w-8" aria-hidden />
-          </div>
+          <Logo />
           <div>
             <h1 className="text-xl font-bold">Nouveau mot de passe</h1>
             <p className="text-sm opacity-70">

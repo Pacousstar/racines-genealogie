@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, Star, Heart, Crown } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import ActionsFiche from "@/components/saisie/actions-fiche";
+import Logo from "@/components/branding/logo";
 import {
   initiales,
   nomComplet,
@@ -190,12 +191,15 @@ export default async function FichePersonnePage({
 
   return (
     <main className="mx-auto max-w-2xl p-4 sm:p-6">
-      <Link
-        href="/tableau"
-        className="inline-flex items-center gap-1.5 text-sm font-medium opacity-80 transition hover:opacity-100"
-      >
-        <ArrowLeft className="h-4 w-4" aria-hidden /> Retour au tableau
-      </Link>
+      <div className="flex items-center gap-3">
+        <Logo />
+        <Link
+          href="/tableau"
+          className="inline-flex items-center gap-1.5 text-sm font-medium opacity-80 transition hover:opacity-100"
+        >
+          <ArrowLeft className="h-4 w-4" aria-hidden /> Retour au tableau
+        </Link>
+      </div>
 
       <section className="mt-4 rounded-2xl border border-current/10 bg-white/70 p-6">
         <div className="flex flex-wrap items-start gap-4">
