@@ -59,7 +59,9 @@
   border-radius: 5px 0 0 0;
 }
 
-.arbre ul ul::before {
+/* Segment vertical entre une carte et la barre de ses enfants,
+   à chaque niveau (y compris depuis la racine). */
+.arbre ul::before {
   content: "";
   position: absolute;
   top: 0;
