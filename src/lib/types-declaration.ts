@@ -3,8 +3,18 @@ export type DetailLienDeclaration = {
   dateDeces: string;
 } | null;
 
+export type PersonneNouvelle = {
+  nom: string;
+  prenom: string;
+  sexe: "M" | "F" | null;
+  date_naissance: string;
+  date_deces: string;
+  decede: boolean;
+};
+
 export type EnfantDeclaration = {
-  id: string;
+  id: string | null;
+  nouveau: PersonneNouvelle | null;
   date_naissance: string;
   decede: boolean;
   date_deces: string;

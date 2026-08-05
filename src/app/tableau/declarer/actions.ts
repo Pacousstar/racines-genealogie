@@ -6,6 +6,7 @@ import { obtenirOuCreerQuartier, obtenirOuCreerFamille } from "@/lib/nomenclatur
 import type {
   DetailLienDeclaration,
   EnfantDeclaration,
+  PersonneNouvelle,
 } from "@/lib/types-declaration";
 
 export type Declaration = {
@@ -24,6 +25,9 @@ export type Declaration = {
   pere_id: string | null;
   mere_id: string | null;
   conjoint_id: string | null;
+  pere_nouveau: PersonneNouvelle | null;
+  mere_nouveau: PersonneNouvelle | null;
+  conjoint_nouveau: PersonneNouvelle | null;
   nouveau_quartier: string;
   nouvelle_famille: string;
   retraite: boolean;
@@ -66,6 +70,32 @@ async function appliquerEnfant(
   if (Object.keys(patch).length > 0) {
     await supabase.from("personnes").update(patch).eq("id", enfant.id);
   }
+}
+
+function champsNouveau(n: PersonneNouvelle, source: string) {
+  return {
+    nom: n.nom.trim(),
+    prenom: n.prenom?.trim() || null,
+    sexe: n.sexe,
+    vivant: !n.decede,
+    date_naissance: n.date_naissance?.trim() || null,
+    date_deces: n.decede ? n.date_deces?.trim() || null : null,
+    fiabilite: "confirmé",
+    source,
+  };
+}
+
+async function creerPersonne(
+  supabase: SupabaseClient,
+  n: PersonneNouvelle,
+  source: string
+): Promise<string | null> {
+  const { data, error } = await supabase
+    .from("personnes")
+    .insert(champsNouveau(n, source))
+    .select("id")
+    .single();
+  return error || !data ? null : data.id;
 }
 
 // Repli si les nouvelles colonnes (retraite, residence, crise_2010_2011)
@@ -156,15 +186,29 @@ export async function declarer(
 
   const parents: Array<{
     cle: "pere_id" | "mere_id";
+    nouveau: PersonneNouvelle | null;
     nomProvisoire: string;
     sexeProvisoire: "M" | "F";
   }> = [
-    { cle: "pere_id", nomProvisoire: "Père inconnu", sexeProvisoire: "M" },
-    { cle: "mere_id", nomProvisoire: "Mère inconnue", sexeProvisoire: "F" },
+    {
+      cle: "pere_id",
+      nouveau: d.pere_nouveau,
+      nomProvisoire: "Père inconnu",
+      sexeProvisoire: "M",
+    },
+    {
+      cle: "mere_id",
+      nouveau: d.mere_nouveau,
+      nomProvisoire: "Mère inconnue",
+      sexeProvisoire: "F",
+    },
   ];
 
-  for (const { cle, nomProvisoire, sexeProvisoire } of parents) {
+  for (const { cle, nouveau, nomProvisoire, sexeProvisoire } of parents) {
     let parentId = d[cle];
+    if (!parentId && nouveau?.nom?.trim()) {
+      parentId = await creerPersonne(supabase, nouveau, d.source);
+    }
     if (!parentId && d.provisoireParents) {
       const { data: prov, error: errProv } = await supabase
         .from("personnes")
@@ -181,26 +225,59 @@ export async function declarer(
     if (parentId) {
       await supabase.from("enfants").insert({ parent_id: parentId, enfant_id: id });
       const detail = cle === "pere_id" ? d.pere : d.mere;
-      await appliquerDetailLien(supabase, parentId, detail);
+      if (nouveau?.nom?.trim()) {
+        if (nouveau.decede) {
+          await supabase
+            .from("personnes")
+            .update({ vivant: false, date_deces: nouveau.date_deces.trim() || null })
+            .eq("id", parentId);
+        }
+      } else {
+        await appliquerDetailLien(supabase, parentId, detail);
+      }
     }
   }
 
-  if (d.conjoint_id) {
+  const conjointId =
+    d.conjoint_id ??
+    (d.conjoint_nouveau?.nom?.trim()
+      ? await creerPersonne(supabase, d.conjoint_nouveau, d.source)
+      : null);
+
+  if (conjointId) {
     await supabase
       .from("unions")
       .insert({
         conjoint_1: id,
-        conjoint_2: d.conjoint_id,
+        conjoint_2: conjointId,
         type: "mariage",
       });
-    await appliquerDetailLien(supabase, d.conjoint_id, d.conjoint);
+    if (!d.conjoint_id) {
+      if (d.conjoint_nouveau?.decede) {
+        await supabase
+          .from("personnes")
+          .update({
+            vivant: false,
+            date_deces: d.conjoint_nouveau.date_deces.trim() || null,
+          })
+          .eq("id", conjointId);
+      }
+    } else {
+      await appliquerDetailLien(supabase, conjointId, d.conjoint);
+    }
   }
 
   for (const [index, enfant] of (d.enfants ?? []).entries()) {
-    await appliquerEnfant(supabase, enfant);
+    let enfantId = enfant.id;
+    if (!enfantId && enfant.nouveau?.nom?.trim()) {
+      enfantId = await creerPersonne(supabase, enfant.nouveau, d.source);
+    }
+    if (!enfantId) continue;
+    const enfantFinal = { ...enfant, id: enfantId };
+    await appliquerEnfant(supabase, enfantFinal);
     await supabase
       .from("enfants")
-      .insert({ parent_id: id, enfant_id: enfant.id, rang: index + 1 });
+      .insert({ parent_id: id, enfant_id: enfantId, rang: index + 1 });
   }
 
   return { id };

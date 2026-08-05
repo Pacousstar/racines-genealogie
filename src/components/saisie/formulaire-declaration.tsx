@@ -1,12 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { Plus, RotateCcw, Loader2, X, Camera } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { declarer } from "@/app/tableau/declarer/actions";
 import { modifier, mettrePhoto } from "@/app/tableau/personnes/actions";
+import type { PersonneNouvelle } from "@/lib/types-declaration";
 import RecherchePersonne, {
   type ResultatPersonne,
 } from "@/components/saisie/recherche-personne";
@@ -75,12 +76,24 @@ function Radio({
 }
 
 type DetailLien = { decede: boolean; dateDeces: string };
+type ModeLien = "relier" | "declarer";
 type EnfantLigne = {
   personne: ResultatPersonne | null;
+  mode: ModeLien;
+  nouvelle: PersonneNouvelle | null;
   naissance: string;
   decede: boolean;
   deces: string;
 };
+
+const nouvelleVide = (): PersonneNouvelle => ({
+  nom: "",
+  prenom: "",
+  sexe: null,
+  date_naissance: "",
+  date_deces: "",
+  decede: false,
+});
 
 const detailDe = (p: ResultatPersonne | null): DetailLien => ({
   decede: Boolean(p && p.vivant === false),
@@ -89,10 +102,117 @@ const detailDe = (p: ResultatPersonne | null): DetailLien => ({
 
 const ligneDe = (p: ResultatPersonne | null): EnfantLigne => ({
   personne: p,
+  mode: "relier",
+  nouvelle: null,
   naissance: p?.date_naissance ?? "",
   decede: Boolean(p && p.vivant === false),
   deces: p?.date_deces ?? "",
 });
+
+const ligneNouvelle = (): EnfantLigne => ({
+  personne: null,
+  mode: "declarer",
+  nouvelle: nouvelleVide(),
+  naissance: "",
+  decede: false,
+  deces: "",
+});
+
+function BoutonMode({
+  actif,
+  onClick,
+  children,
+}: {
+  actif: boolean;
+  onClick: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded px-2 py-1 text-[11px] font-semibold transition ${
+        actif ? "bg-amber-800 text-white" : "bg-current/10 hover:bg-current/20"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
+function ChampNouveau({
+  etat,
+  setEtat,
+  placeholderNom = "Nom",
+}: {
+  etat: PersonneNouvelle;
+  setEtat: (n: PersonneNouvelle) => void;
+  placeholderNom?: string;
+}) {
+  const maj = (patch: Partial<PersonneNouvelle>) =>
+    setEtat({ ...etat, ...patch });
+  return (
+    <div className="rounded-xl border border-emerald-700/40 bg-emerald-50/60 p-3">
+      <div className="grid gap-3 sm:grid-cols-2">
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="font-medium">Nom</span>
+          <input
+            type="text"
+            value={etat.nom}
+            onChange={(e) => maj({ nom: e.target.value })}
+            placeholder={placeholderNom}
+            className="rounded-lg border px-3 py-2"
+          />
+        </label>
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="font-medium">Prénom</span>
+          <input
+            type="text"
+            value={etat.prenom}
+            onChange={(e) => maj({ prenom: e.target.value })}
+            className="rounded-lg border px-3 py-2"
+          />
+        </label>
+      </div>
+      <div className="mt-3 flex flex-wrap items-center gap-4">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium">Sexe :</span>
+          <Radio checked={etat.sexe === "M"} onChange={() => maj({ sexe: "M" })} label="♂ Homme" />
+          <Radio checked={etat.sexe === "F"} onChange={() => maj({ sexe: "F" })} label="♀ Femme" />
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium">Vivant :</span>
+          <Radio checked={!etat.decede} onChange={() => maj({ decede: false })} label="✓ Oui" />
+          <Radio checked={etat.decede} onChange={() => maj({ decede: true })} label="Décédé" />
+        </div>
+      </div>
+      <div className="mt-3 grid gap-3 sm:grid-cols-2">
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="font-medium">Naissance</span>
+          <input
+            type="text"
+            value={etat.date_naissance}
+            onChange={(e) => maj({ date_naissance: e.target.value })}
+            placeholder="Ex. « vers 1890 »"
+            className="rounded-lg border px-3 py-2"
+          />
+        </label>
+        {etat.decede && (
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="font-medium">Décès</span>
+            <input
+              type="text"
+              value={etat.date_deces}
+              onChange={(e) => maj({ date_deces: e.target.value })}
+              placeholder="Ex. « 2011 »"
+              className="rounded-lg border px-3 py-2"
+            />
+          </label>
+        )}
+      </div>
+    </div>
+  );
+}
 
 function GroupeLien({
   label,
@@ -133,6 +253,60 @@ function GroupeLien({
           placeholder="Date du décès (ex. « 2011 »)"
           className="mt-1 w-full rounded-lg border px-3 py-2 text-sm"
         />
+      )}
+    </div>
+  );
+}
+
+function GroupeLienOuNouveau({
+  label,
+  mode,
+  setMode,
+  valeurInitiale,
+  detail,
+  onChangePersonne,
+  onChangeDetail,
+  nouveau,
+  setNouveau,
+  cleForm,
+}: {
+  label: string;
+  mode: ModeLien;
+  setMode: (m: ModeLien) => void;
+  valeurInitiale: ResultatPersonne | null;
+  detail: DetailLien;
+  onChangePersonne: (p: ResultatPersonne | null) => void;
+  onChangeDetail: (d: DetailLien) => void;
+  nouveau: PersonneNouvelle;
+  setNouveau: (n: PersonneNouvelle) => void;
+  cleForm: number;
+}) {
+  return (
+    <div className="relative rounded-xl border border-current/10 p-2">
+      <div className="mb-1 flex items-center justify-between gap-2">
+        <span className="text-xs font-semibold uppercase tracking-wide opacity-70">
+          {label}
+        </span>
+        <div className="flex gap-1.5">
+          <BoutonMode actif={mode === "relier"} onClick={() => setMode("relier")}>
+            Chercher
+          </BoutonMode>
+          <BoutonMode actif={mode === "declarer"} onClick={() => setMode("declarer")}>
+            Déclarer ici
+          </BoutonMode>
+        </div>
+      </div>
+      {mode === "relier" ? (
+        <GroupeLien
+          key={`${label}-${cleForm}`}
+          label=""
+          valeurInitiale={valeurInitiale}
+          detail={detail}
+          onChangePersonne={onChangePersonne}
+          onChangeDetail={onChangeDetail}
+        />
+      ) : (
+        <ChampNouveau etat={nouveau} setEtat={setNouveau} />
       )}
     </div>
   );
@@ -193,8 +367,17 @@ export default function FormulaireDeclaration({
   const [enfants, setEnfants] = useState<EnfantLigne[]>(
     (personne?.enfants ?? []).map(ligneDe)
   );
+  const [cleForm, setCleForm] = useState(0);
+  const [pereMode, setPereMode] = useState<ModeLien>("relier");
+  const [mereMode, setMereMode] = useState<ModeLien>("relier");
+  const [conjointMode, setConjointMode] = useState<ModeLien>("relier");
+  const [nouveauPere, setNouveauPere] = useState<PersonneNouvelle>(nouvelleVide());
+  const [nouvelleMere, setNouvelleMere] = useState<PersonneNouvelle>(nouvelleVide());
+  const [nouveauConjoint, setNouveauConjoint] = useState<PersonneNouvelle>(
+    nouvelleVide()
+  );
 
-  const ajouterEnfant = () => setEnfants((liste) => [...liste, ligneDe(null)]);
+  const ajouterEnfant = () => setEnfants((liste) => [...liste, ligneNouvelle()]);
 
   const retirerEnfant = (index: number) =>
     setEnfants((liste) => liste.filter((_, i) => i !== index));
@@ -285,9 +468,12 @@ export default function FormulaireDeclaration({
         famille_id: familleId || null,
         source: sourceFinale,
         fiabilite,
-        pere_id: pereId,
-        mere_id: mereId,
-        conjoint_id: conjointId,
+        pere_id: pereMode === "relier" ? pereId : null,
+        mere_id: mereMode === "relier" ? mereId : null,
+        conjoint_id: conjointMode === "relier" ? conjointId : null,
+        pere_nouveau: pereMode === "declarer" ? nouveauPere : null,
+        mere_nouveau: mereMode === "declarer" ? nouvelleMere : null,
+        conjoint_nouveau: conjointMode === "declarer" ? nouveauConjoint : null,
         photo_url: photoUrl || null,
         nouveau_quartier: modeNouveauQuartier ? nouveauQuartier : "",
         nouvelle_famille: modeNouvelleFamille ? nouvelleFamille : "",
@@ -298,8 +484,9 @@ export default function FormulaireDeclaration({
         pere: pereId ? pereDetail : null,
         mere: mereId ? mereDetail : null,
         conjoint: conjointId ? conjointDetail : null,
-        enfants: enfants.filter((l) => l.personne).map((l) => ({
-          id: l.personne!.id,
+        enfants: enfants.map((l) => ({
+          id: l.mode === "relier" ? l.personne?.id ?? null : null,
+          nouveau: l.mode === "declarer" ? l.nouvelle : null,
           date_naissance: l.naissance,
           decede: l.decede,
           date_deces: l.deces,
@@ -367,6 +554,13 @@ export default function FormulaireDeclaration({
     setMereDetail(detailDe(personne?.mere ?? null));
     setConjointDetail(detailDe(personne?.conjoint ?? null));
     setEnfants((personne?.enfants ?? []).map(ligneDe));
+    setCleForm((n) => n + 1);
+    setPereMode("relier");
+    setMereMode("relier");
+    setConjointMode("relier");
+    setNouveauPere(nouvelleVide());
+    setNouvelleMere(nouvelleVide());
+    setNouveauConjoint(nouvelleVide());
   };
 
   const champ = (label: string, value: string, set: (v: string) => void) => (
@@ -528,6 +722,54 @@ export default function FormulaireDeclaration({
           {champ("Résidence (quartier habité)", residence, setResidence)}
         </div>
 
+        <div className="mt-5 border-t border-amber-700/30 pt-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className="text-sm font-bold uppercase tracking-wide text-amber-800">
+              Conjoint(e)
+            </span>
+            <div className="flex gap-1.5">
+              <BoutonMode
+                actif={conjointMode === "relier"}
+                onClick={() => setConjointMode("relier")}
+              >
+                Relier une personne
+              </BoutonMode>
+              <BoutonMode
+                actif={conjointMode === "declarer"}
+                onClick={() => setConjointMode("declarer")}
+              >
+                Déclarer ici
+              </BoutonMode>
+            </div>
+          </div>
+          <p className="mt-1 text-xs opacity-60">
+            Le conjoint(e) est une personne à part entière : il/elle sera
+            créé(e) et relié(e), et apparaîtra à côté de cette personne dans
+            l&apos;arbre.
+          </p>
+          <div className="mt-3">
+            {conjointMode === "relier" ? (
+              <GroupeLien
+                key={`conjoint-${cleForm}`}
+                label="Rechercher le/la conjoint(e)…"
+                valeurInitiale={personne?.conjoint ?? null}
+                detail={conjointDetail}
+                onChangePersonne={(p) => {
+                  setConjointId(p ? p.id : null);
+                  setConjointDetail(detailDe(p));
+                }}
+                onChangeDetail={setConjointDetail}
+              />
+            ) : (
+              <ChampNouveau
+                etat={nouveauConjoint}
+                setEtat={setNouveauConjoint}
+                placeholderNom="Nom du/de la conjoint(e)"
+              />
+            )}
+          </div>
+        </div>
+
         <div className="mt-5 flex flex-wrap items-center gap-4 border-t border-amber-700/30 pt-4">
             <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-emerald-800 text-2xl font-bold text-white">
               {photoSrc || apercu ? (
@@ -621,16 +863,19 @@ export default function FormulaireDeclaration({
           {selectFamilles}
         </div>
         <p className="mt-3 text-xs opacity-60">
-          Le conjoint(e) peut appartenir à n&apos;importe quel quartier ou
-          famille du village — la recherche le trouvera partout.
+          Les personnes reliées (parents, enfants) peuvent appartenir à
+          n&apos;importe quel quartier ou famille du village — la recherche les
+          trouvera partout.
         </p>
       </fieldset>
 
       <fieldset className={styleEncart}>
         <legend className={styleLegende}>4 · Liens</legend>
-        <div className="grid gap-4 sm:grid-cols-3">
-          <GroupeLien
+        <div className="grid gap-4 sm:grid-cols-2">
+          <GroupeLienOuNouveau
             label="Père"
+            mode={pereMode}
+            setMode={setPereMode}
             valeurInitiale={personne?.pere ?? null}
             detail={pereDetail}
             onChangePersonne={(p) => {
@@ -638,9 +883,14 @@ export default function FormulaireDeclaration({
               setPereDetail(detailDe(p));
             }}
             onChangeDetail={setPereDetail}
+            nouveau={nouveauPere}
+            setNouveau={setNouveauPere}
+            cleForm={cleForm}
           />
-          <GroupeLien
+          <GroupeLienOuNouveau
             label="Mère"
+            mode={mereMode}
+            setMode={setMereMode}
             valeurInitiale={personne?.mere ?? null}
             detail={mereDetail}
             onChangePersonne={(p) => {
@@ -648,16 +898,9 @@ export default function FormulaireDeclaration({
               setMereDetail(detailDe(p));
             }}
             onChangeDetail={setMereDetail}
-          />
-          <GroupeLien
-            label="Conjoint(e)"
-            valeurInitiale={personne?.conjoint ?? null}
-            detail={conjointDetail}
-            onChangePersonne={(p) => {
-              setConjointId(p ? p.id : null);
-              setConjointDetail(detailDe(p));
-            }}
-            onChangeDetail={setConjointDetail}
+            nouveau={nouvelleMere}
+            setNouveau={setNouvelleMere}
+            cleForm={cleForm}
           />
         </div>
         {!edition && (
@@ -702,11 +945,39 @@ export default function FormulaireDeclaration({
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0 flex-1">
-                      <RecherchePersonne
-                        label={`Enfant n° ${index + 1}`}
-                        valeurInitiale={enfant.personne ?? null}
-                        onChange={choisirEnfant(index)}
-                      />
+                      <div className="mb-1 flex items-center justify-between gap-2">
+                        <span className="text-xs font-semibold uppercase tracking-wide opacity-70">
+                          Enfant n° {index + 1}
+                        </span>
+                        <div className="flex gap-1.5">
+                          <BoutonMode
+                            actif={enfant.mode === "relier"}
+                            onClick={() => majEnfant(index, { mode: "relier" })}
+                          >
+                            Chercher
+                          </BoutonMode>
+                          <BoutonMode
+                            actif={enfant.mode === "declarer"}
+                            onClick={() => majEnfant(index, { mode: "declarer" })}
+                          >
+                            Déclarer
+                          </BoutonMode>
+                        </div>
+                      </div>
+                      {enfant.mode === "relier" ? (
+                        <RecherchePersonne
+                          key={`enfant-${index}-${cleForm}`}
+                          label=""
+                          valeurInitiale={enfant.personne ?? null}
+                          onChange={choisirEnfant(index)}
+                        />
+                      ) : (
+                        <ChampNouveau
+                          etat={enfant.nouvelle ?? nouvelleVide()}
+                          setEtat={(n) => majEnfant(index, { nouvelle: n })}
+                          placeholderNom={`Nom de l'enfant`}
+                        />
+                      )}
                     </div>
                     <button
                       type="button"

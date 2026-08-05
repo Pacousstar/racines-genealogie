@@ -1,4 +1,4 @@
-"use server";
+﻿"use server";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
@@ -6,6 +6,7 @@ import { obtenirOuCreerQuartier, obtenirOuCreerFamille } from "@/lib/nomenclatur
 import type {
   DetailLienDeclaration,
   EnfantDeclaration,
+  PersonneNouvelle,
 } from "@/lib/types-declaration";
 
 export type Modification = {
@@ -24,6 +25,9 @@ export type Modification = {
   pere_id: string | null;
   mere_id: string | null;
   conjoint_id: string | null;
+  pere_nouveau: PersonneNouvelle | null;
+  mere_nouveau: PersonneNouvelle | null;
+  conjoint_nouveau: PersonneNouvelle | null;
   nouveau_quartier: string;
   nouvelle_famille: string;
   retraite: boolean;
@@ -68,7 +72,7 @@ async function appliquerEnfant(
 }
 
 // Repli si les nouvelles colonnes (retraite, residence, crise_2010_2011)
-// n'ont pas encore été ajoutées dans Supabase — la mise à jour reste possible.
+// n'ont pas encore Ã©tÃ© ajoutÃ©es dans Supabase â€” la mise Ã  jour reste possible.
 const COLONNE_MANQUANTE = /column .* does not exist|could not find the column/i;
 
 async function majPersonne(
@@ -96,7 +100,7 @@ export async function modifier(
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { erreur: "Non connecté. Reconnectez-vous." };
+  if (!user) return { erreur: "Non connectÃ©. Reconnectez-vous." };
 
   const { data: prof } = await supabase
     .from("profiles")
@@ -105,7 +109,7 @@ export async function modifier(
     .single();
   const role = prof?.role;
   if (role !== "editeur" && role !== "admin") {
-    return { erreur: "Réservé à un éditeur (CHO ou administrateur)." };
+    return { erreur: "RÃ©servÃ© Ã  un Ã©diteur (CHO ou administrateur)." };
   }
 
   const nom = m.nom.trim();
@@ -147,20 +151,42 @@ export async function modifier(
   );
 
   if (error) {
-    return { erreur: `Mise à jour impossible : ${error.message}` };
+    return { erreur: `Mise Ã  jour impossible : ${error.message}` };
   }
 
   await supabase.from("enfants").delete().eq("enfant_id", id);
 
   const parents: Array<{
     cle: "pere_id" | "mere_id";
-  }> = [{ cle: "pere_id" }, { cle: "mere_id" }];
+    nouveau: PersonneNouvelle | null;
+  }> = [
+    { cle: "pere_id", nouveau: m.pere_nouveau },
+    { cle: "mere_id", nouveau: m.mere_nouveau },
+  ];
 
-  for (const { cle } of parents) {
-    if (m[cle]) {
-      await supabase.from("enfants").insert({ parent_id: m[cle], enfant_id: id });
+  for (const { cle, nouveau } of parents) {
+    let parentId = m[cle];
+    if (!parentId && nouveau?.nom?.trim()) {
+      const { data: prov, error: errProv } = await supabase
+        .from("personnes")
+        .insert({
+          nom: nouveau.nom.trim(),
+          prenom: nouveau.prenom?.trim() || null,
+          sexe: nouveau.sexe,
+          vivant: !nouveau.decede,
+          date_naissance: nouveau.date_naissance?.trim() || null,
+          date_deces: nouveau.decede ? nouveau.date_deces?.trim() || null : null,
+          fiabilite: "confirmÃ©",
+          source: m.source,
+        })
+        .select("id")
+        .single();
+      if (!errProv && prov) parentId = prov.id;
+    }
+    if (parentId) {
+      await supabase.from("enfants").insert({ parent_id: parentId, enfant_id: id });
       const detail = cle === "pere_id" ? m.pere : m.mere;
-      await appliquerDetailLien(supabase, m[cle], detail);
+      await appliquerDetailLien(supabase, parentId, detail);
     }
   }
 
@@ -169,19 +195,61 @@ export async function modifier(
     .delete()
     .or(`conjoint_1.eq.${id},conjoint_2.eq.${id}`);
 
-  if (m.conjoint_id) {
+  let conjointId = m.conjoint_id;
+  if (!conjointId && m.conjoint_nouveau?.nom?.trim()) {
+    const { data: prov, error: errProv } = await supabase
+      .from("personnes")
+      .insert({
+        nom: m.conjoint_nouveau.nom.trim(),
+        prenom: m.conjoint_nouveau.prenom?.trim() || null,
+        sexe: m.conjoint_nouveau.sexe,
+        vivant: !m.conjoint_nouveau.decede,
+        date_naissance: m.conjoint_nouveau.date_naissance?.trim() || null,
+        date_deces: m.conjoint_nouveau.decede
+          ? m.conjoint_nouveau.date_deces?.trim() || null
+          : null,
+        fiabilite: "confirmÃ©",
+        source: m.source,
+      })
+      .select("id")
+      .single();
+    if (!errProv && prov) conjointId = prov.id;
+  }
+
+  if (conjointId) {
     await supabase
       .from("unions")
-      .insert({ conjoint_1: id, conjoint_2: m.conjoint_id, type: "mariage" });
-    await appliquerDetailLien(supabase, m.conjoint_id, m.conjoint);
+      .insert({ conjoint_1: id, conjoint_2: conjointId, type: "mariage" });
+    await appliquerDetailLien(supabase, conjointId, m.conjoint);
   }
 
   await supabase.from("enfants").delete().eq("parent_id", id);
   for (const [index, enfant] of (m.enfants ?? []).entries()) {
-    await appliquerEnfant(supabase, enfant);
+    let enfantId = enfant.id;
+    if (!enfantId && enfant.nouveau?.nom?.trim()) {
+      const { data: prov, error: errProv } = await supabase
+        .from("personnes")
+        .insert({
+          nom: enfant.nouveau.nom.trim(),
+          prenom: enfant.nouveau.prenom?.trim() || null,
+          sexe: enfant.nouveau.sexe,
+          vivant: !enfant.nouveau.decede,
+          date_naissance: enfant.nouveau.date_naissance?.trim() || null,
+          date_deces: enfant.nouveau.decede
+            ? enfant.nouveau.date_deces?.trim() || null
+            : null,
+          fiabilite: "confirmÃ©",
+          source: m.source,
+        })
+        .select("id")
+        .single();
+      if (!errProv && prov) enfantId = prov.id;
+    }
+    if (!enfantId) continue;
+    await appliquerEnfant(supabase, { ...enfant, id: enfantId });
     await supabase
       .from("enfants")
-      .insert({ parent_id: id, enfant_id: enfant.id, rang: index + 1 });
+      .insert({ parent_id: id, enfant_id: enfantId, rang: index + 1 });
   }
 
   return { id };
@@ -196,7 +264,7 @@ export async function mettrePhoto(
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { erreur: "Non connecté. Reconnectez-vous." };
+  if (!user) return { erreur: "Non connectÃ©. Reconnectez-vous." };
 
   const { data: prof } = await supabase
     .from("profiles")
@@ -205,7 +273,7 @@ export async function mettrePhoto(
     .single();
   const role = prof?.role;
   if (role !== "editeur" && role !== "admin") {
-    return { erreur: "Réservé à un éditeur (CHO ou administrateur)." };
+    return { erreur: "RÃ©servÃ© Ã  un Ã©diteur (CHO ou administrateur)." };
   }
 
   const { error } = await supabase
@@ -213,7 +281,7 @@ export async function mettrePhoto(
     .update({ photo_url: photoUrl })
     .eq("id", id);
   if (error) {
-    return { erreur: `Mise à jour impossible : ${error.message}` };
+    return { erreur: `Mise Ã  jour impossible : ${error.message}` };
   }
   return { id };
 }
@@ -226,7 +294,7 @@ export async function supprimer(
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { erreur: "Non connecté. Reconnectez-vous." };
+  if (!user) return { erreur: "Non connectÃ©. Reconnectez-vous." };
 
   const { data: prof } = await supabase
     .from("profiles")
@@ -235,7 +303,7 @@ export async function supprimer(
     .single();
   const role = prof?.role;
   if (role !== "editeur" && role !== "admin") {
-    return { erreur: "Réservé à un éditeur (CHO ou administrateur)." };
+    return { erreur: "RÃ©servÃ© Ã  un Ã©diteur (CHO ou administrateur)." };
   }
 
   const { error } = await supabase.from("personnes").delete().eq("id", id);
