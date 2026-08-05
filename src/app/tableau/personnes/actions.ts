@@ -185,6 +185,37 @@ export async function modifier(
   return { id };
 }
 
+export async function mettrePhoto(
+  id: string,
+  photoUrl: string
+): Promise<{ erreur?: string; id?: string }> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { erreur: "Non connecté. Reconnectez-vous." };
+
+  const { data: prof } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+  const role = prof?.role;
+  if (role !== "editeur" && role !== "admin") {
+    return { erreur: "Réservé à un éditeur (CHO ou administrateur)." };
+  }
+
+  const { error } = await supabase
+    .from("personnes")
+    .update({ photo_url: photoUrl })
+    .eq("id", id);
+  if (error) {
+    return { erreur: `Mise à jour impossible : ${error.message}` };
+  }
+  return { id };
+}
+
 export async function supprimer(
   id: string
 ): Promise<{ erreur?: string; id?: string }> {

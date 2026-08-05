@@ -6,7 +6,7 @@ import toast from "react-hot-toast";
 import { Plus, RotateCcw, Loader2, X, Camera } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { declarer } from "@/app/tableau/declarer/actions";
-import { modifier } from "@/app/tableau/personnes/actions";
+import { modifier, mettrePhoto } from "@/app/tableau/personnes/actions";
 import RecherchePersonne, {
   type ResultatPersonne,
 } from "@/components/saisie/recherche-personne";
@@ -168,6 +168,8 @@ export default function FormulaireDeclaration({
     personne?.photo_url ?? null
   );
   const [photoEnvoi, setPhotoEnvoi] = useState(false);
+  const [fichierEnAttente, setFichierEnAttente] = useState<File | null>(null);
+  const [apercu, setApercu] = useState<string | null>(null);
   const [source, setSource] = useState(personne?.source ?? "Témoignage du CHO");
   const [sourceDetail, setSourceDetail] = useState("");
   const [fiabilite, setFiabilite] = useState(personne?.fiabilite ?? "confirmé");
@@ -211,13 +213,20 @@ export default function FormulaireDeclaration({
     : source;
 
   const photoSrc = photoUrl
-    ? photoUrl.startsWith("http")
+    ? photoUrl.startsWith("data:") || photoUrl.startsWith("blob:")
       ? photoUrl
-      : `/photo?p=${encodeURIComponent(photoUrl)}`
+      : photoUrl.startsWith("http")
+        ? photoUrl
+        : `/photo?p=${encodeURIComponent(photoUrl)}`
     : null;
 
   const choixPhoto = async (fichier: File | undefined) => {
-    if (!fichier || !personne) return;
+    if (!fichier) return;
+    if (!edition || !personne) {
+      setFichierEnAttente(fichier);
+      setApercu(URL.createObjectURL(fichier));
+      return;
+    }
     setPhotoEnvoi(true);
     const supabase = createClient();
     const name = fichier.name.replace(/[^a-zA-Z0-9._-]/g, "_");
@@ -231,6 +240,23 @@ export default function FormulaireDeclaration({
       return;
     }
     setPhotoUrl(chemin);
+  };
+
+  const retirerPhoto = () => {
+    setPhotoUrl(null);
+    setFichierEnAttente(null);
+    setApercu(null);
+  };
+
+  const envoyerPhotoAttente = async (id: string) => {
+    if (!fichierEnAttente) return;
+    const supabase = createClient();
+    const name = fichierEnAttente.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const chemin = `public/${id}/${Date.now()}-${name}`;
+    const { error } = await supabase.storage
+      .from("photos")
+      .upload(chemin, fichierEnAttente);
+    if (!error) await mettrePhoto(id, chemin);
   };
 
   const famillesFiltrees = useMemo(() => {
@@ -289,8 +315,14 @@ export default function FormulaireDeclaration({
           ? "Modifications enregistrées."
           : "Personne enregistrée dans le tableau."
       );
-      router.push(`/tableau/personnes/${res.id}`);
-      router.refresh();
+      if (res.id) {
+        if (!edition) await envoyerPhotoAttente(res.id);
+        router.push(`/tableau/personnes/${res.id}`);
+        router.refresh();
+        setTimeout(() => setEnregistrement(false), 2500);
+      } else {
+        setEnregistrement(false);
+      }
     } catch (e) {
       toast.error(
         `Une erreur est survenue : ${e instanceof Error ? e.message : "inconnue"}`
@@ -318,6 +350,8 @@ export default function FormulaireDeclaration({
     setNouvelleFamille("");
     setPhotoUrl(personne?.photo_url ?? null);
     setPhotoEnvoi(false);
+    setFichierEnAttente(null);
+    setApercu(null);
     setSource(personne?.source ?? "Témoignage du CHO");
     setSourceDetail("");
     setFiabilite(personne?.fiabilite ?? "confirmé");
@@ -480,18 +514,32 @@ export default function FormulaireDeclaration({
           {champ("Résidence (quartier habité)", residence, setResidence)}
         </div>
 
-        {edition && personne && (
-          <div className="mt-5 flex flex-wrap items-center gap-4 border-t border-amber-700/30 pt-4">
+        <div className="mt-5 flex flex-wrap items-center gap-4 border-t border-amber-700/30 pt-4">
             <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-emerald-800 text-2xl font-bold text-white">
-              {photoSrc ? (
+              {photoSrc || apercu ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
-                  src={photoSrc}
+                  src={
+                    apercu ??
+                    photoSrc ??
+                    (personne
+                      ? `/photo?p=${encodeURIComponent(personne.photo_url ?? "")}`
+                      : "")
+                  }
                   alt="Photo de la personne"
                   className="h-full w-full object-cover"
                 />
               ) : (
-                initiales(personne)
+                initiales(
+                  personne ?? {
+                    nom: nom.trim() || "?",
+                    prenom: null,
+                    sexe: null,
+                    date_naissance: null,
+                    date_deces: null,
+                    vivant: null,
+                  }
+                )
               )}
             </div>
             <div className="min-w-0 flex-1">
@@ -505,7 +553,7 @@ export default function FormulaireDeclaration({
                   )}
                   {photoEnvoi
                     ? "Envoi en cours…"
-                    : photoUrl
+                    : photoUrl || apercu
                       ? "Changer la photo"
                       : "Choisir une photo"}
                   <input
@@ -515,10 +563,10 @@ export default function FormulaireDeclaration({
                     onChange={(e) => choixPhoto(e.target.files?.[0])}
                   />
                 </label>
-                {photoUrl && (
+                {(photoUrl || apercu) && (
                   <button
                     type="button"
-                    onClick={() => setPhotoUrl(null)}
+                    onClick={retirerPhoto}
                     className="inline-flex items-center gap-1 rounded-lg border border-rose-600/40 px-3 py-2 text-sm font-medium text-rose-700 transition hover:bg-rose-600/10"
                   >
                     <X className="h-4 w-4" aria-hidden /> Retirer la photo
@@ -526,11 +574,11 @@ export default function FormulaireDeclaration({
                 )}
               </div>
               <p className="mt-1 text-xs opacity-60">
-                JPG, PNG ou WebP — 5 Mo maximum.
+                JPG, PNG ou WebP — 5 Mo maximum. Nouvelle personne : la photo
+                est chargée à l&apos;enregistrement.
               </p>
             </div>
           </div>
-        )}
       </fieldset>
 
       <fieldset className={styleEncart}>
