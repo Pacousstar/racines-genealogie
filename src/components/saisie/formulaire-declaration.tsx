@@ -995,33 +995,35 @@ export default function FormulaireDeclaration({
                       <X className="h-3.5 w-3.5" aria-hidden />
                     </button>
                   </div>
-                  <div className="mt-2 grid gap-2">
-                    <input
-                      type="text"
-                      value={enfant.naissance}
-                      onChange={(e) => majEnfant(index, { naissance: e.target.value })}
-                      placeholder="Date de naissance de l'enfant (ex. « vers 1980 »)"
-                      className="w-full rounded-lg border px-3 py-2 text-sm"
-                    />
-                    <label className="flex items-center gap-2 text-sm">
-                      <input
-                        type="checkbox"
-                        checked={enfant.decede}
-                        onChange={(e) => majEnfant(index, { decede: e.target.checked })}
-                        className={styleCase}
-                      />
-                      <span className="font-medium">Décédé(e)</span>
-                    </label>
-                    {enfant.decede && (
+                  {enfant.mode === "relier" && (
+                    <div className="mt-2 grid gap-2">
                       <input
                         type="text"
-                        value={enfant.deces}
-                        onChange={(e) => majEnfant(index, { deces: e.target.value })}
-                        placeholder="Date du décès (ex. « 2011 »)"
+                        value={enfant.naissance}
+                        onChange={(e) => majEnfant(index, { naissance: e.target.value })}
+                        placeholder="Date de naissance de l'enfant (ex. « vers 1980 »)"
                         className="w-full rounded-lg border px-3 py-2 text-sm"
                       />
-                    )}
-                  </div>
+                      <label className="flex items-center gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          checked={enfant.decede}
+                          onChange={(e) => majEnfant(index, { decede: e.target.checked })}
+                          className={styleCase}
+                        />
+                        <span className="font-medium">Décédé(e)</span>
+                      </label>
+                      {enfant.decede && (
+                        <input
+                          type="text"
+                          value={enfant.deces}
+                          onChange={(e) => majEnfant(index, { deces: e.target.value })}
+                          placeholder="Date du décès (ex. « 2011 »)"
+                          className="w-full rounded-lg border px-3 py-2 text-sm"
+                        />
+                      )}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
