@@ -109,6 +109,15 @@ const ligneDe = (p: ResultatPersonne | null): EnfantLigne => ({
   deces: p?.date_deces ?? "",
 });
 
+const nouvelleDepuis = (p: ResultatPersonne): PersonneNouvelle => ({
+  nom: p.nom,
+  prenom: p.prenom ?? "",
+  sexe: p.sexe === "M" || p.sexe === "F" ? p.sexe : null,
+  date_naissance: p.date_naissance ?? "",
+  date_deces: p.date_deces ?? "",
+  decede: p.vivant === false,
+});
+
 const ligneNouvelle = (): EnfantLigne => ({
   personne: null,
   mode: "declarer",
@@ -966,13 +975,29 @@ export default function FormulaireDeclaration({
                         <div className="flex gap-1.5">
                           <BoutonMode
                             actif={enfant.mode === "relier"}
-                            onClick={() => majEnfant(index, { mode: "relier" })}
+                            onClick={() =>
+                              majEnfant(index, {
+                                mode: "relier",
+                                naissance:
+                                  enfant.nouvelle?.date_naissance ?? enfant.naissance,
+                                decede: enfant.nouvelle?.decede ?? enfant.decede,
+                                deces: enfant.nouvelle?.date_deces ?? enfant.deces,
+                              })
+                            }
                           >
                             Chercher
                           </BoutonMode>
                           <BoutonMode
                             actif={enfant.mode === "declarer"}
-                            onClick={() => majEnfant(index, { mode: "declarer" })}
+                            onClick={() =>
+                              majEnfant(index, {
+                                mode: "declarer",
+                                nouvelle:
+                                  enfant.personne
+                                    ? nouvelleDepuis(enfant.personne)
+                                    : enfant.nouvelle ?? nouvelleVide(),
+                              })
+                            }
                           >
                             Déclarer
                           </BoutonMode>
