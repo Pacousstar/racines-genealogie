@@ -368,9 +368,15 @@ export default function FormulaireDeclaration({
     (personne?.enfants ?? []).map(ligneDe)
   );
   const [cleForm, setCleForm] = useState(0);
-  const [pereMode, setPereMode] = useState<ModeLien>("relier");
-  const [mereMode, setMereMode] = useState<ModeLien>("relier");
-  const [conjointMode, setConjointMode] = useState<ModeLien>("relier");
+  const [pereMode, setPereMode] = useState<ModeLien>(
+    personne?.pere ? "relier" : "declarer"
+  );
+  const [mereMode, setMereMode] = useState<ModeLien>(
+    personne?.mere ? "relier" : "declarer"
+  );
+  const [conjointMode, setConjointMode] = useState<ModeLien>(
+    personne?.conjoint ? "relier" : "declarer"
+  );
   const [nouveauPere, setNouveauPere] = useState<PersonneNouvelle>(nouvelleVide());
   const [nouvelleMere, setNouvelleMere] = useState<PersonneNouvelle>(nouvelleVide());
   const [nouveauConjoint, setNouveauConjoint] = useState<PersonneNouvelle>(
@@ -555,9 +561,9 @@ export default function FormulaireDeclaration({
     setConjointDetail(detailDe(personne?.conjoint ?? null));
     setEnfants((personne?.enfants ?? []).map(ligneDe));
     setCleForm((n) => n + 1);
-    setPereMode("relier");
-    setMereMode("relier");
-    setConjointMode("relier");
+    setPereMode(personne?.pere ? "relier" : "declarer");
+    setMereMode(personne?.mere ? "relier" : "declarer");
+    setConjointMode(personne?.conjoint ? "relier" : "declarer");
     setNouveauPere(nouvelleVide());
     setNouvelleMere(nouvelleVide());
     setNouveauConjoint(nouvelleVide());

@@ -1,4 +1,4 @@
-﻿"use server";
+"use server";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
@@ -72,7 +72,7 @@ async function appliquerEnfant(
 }
 
 // Repli si les nouvelles colonnes (retraite, residence, crise_2010_2011)
-// n'ont pas encore Ã©tÃ© ajoutÃ©es dans Supabase â€” la mise Ã  jour reste possible.
+// n'ont pas encore été ajoutées dans Supabase —” la mise Ã  jour reste possible.
 const COLONNE_MANQUANTE = /column .* does not exist|could not find the column/i;
 
 async function majPersonne(
@@ -100,7 +100,7 @@ export async function modifier(
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { erreur: "Non connectÃ©. Reconnectez-vous." };
+  if (!user) return { erreur: "Non connecté. Reconnectez-vous." };
 
   const { data: prof } = await supabase
     .from("profiles")
@@ -109,7 +109,7 @@ export async function modifier(
     .single();
   const role = prof?.role;
   if (role !== "editeur" && role !== "admin") {
-    return { erreur: "RÃ©servÃ© Ã  un Ã©diteur (CHO ou administrateur)." };
+    return { erreur: "Réservé Ã  un éditeur (CHO ou administrateur)." };
   }
 
   const nom = m.nom.trim();
@@ -176,7 +176,7 @@ export async function modifier(
           vivant: !nouveau.decede,
           date_naissance: nouveau.date_naissance?.trim() || null,
           date_deces: nouveau.decede ? nouveau.date_deces?.trim() || null : null,
-          fiabilite: "confirmÃ©",
+          fiabilite: "confirmé",
           source: m.source,
         })
         .select("id")
@@ -208,7 +208,7 @@ export async function modifier(
         date_deces: m.conjoint_nouveau.decede
           ? m.conjoint_nouveau.date_deces?.trim() || null
           : null,
-        fiabilite: "confirmÃ©",
+        fiabilite: "confirmé",
         source: m.source,
       })
       .select("id")
@@ -238,7 +238,7 @@ export async function modifier(
           date_deces: enfant.nouveau.decede
             ? enfant.nouveau.date_deces?.trim() || null
             : null,
-          fiabilite: "confirmÃ©",
+          fiabilite: "confirmé",
           source: m.source,
         })
         .select("id")
@@ -264,7 +264,7 @@ export async function mettrePhoto(
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { erreur: "Non connectÃ©. Reconnectez-vous." };
+  if (!user) return { erreur: "Non connecté. Reconnectez-vous." };
 
   const { data: prof } = await supabase
     .from("profiles")
@@ -273,7 +273,7 @@ export async function mettrePhoto(
     .single();
   const role = prof?.role;
   if (role !== "editeur" && role !== "admin") {
-    return { erreur: "RÃ©servÃ© Ã  un Ã©diteur (CHO ou administrateur)." };
+    return { erreur: "Réservé Ã  un éditeur (CHO ou administrateur)." };
   }
 
   const { error } = await supabase
@@ -294,7 +294,7 @@ export async function supprimer(
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { erreur: "Non connectÃ©. Reconnectez-vous." };
+  if (!user) return { erreur: "Non connecté. Reconnectez-vous." };
 
   const { data: prof } = await supabase
     .from("profiles")
@@ -303,7 +303,7 @@ export async function supprimer(
     .single();
   const role = prof?.role;
   if (role !== "editeur" && role !== "admin") {
-    return { erreur: "RÃ©servÃ© Ã  un Ã©diteur (CHO ou administrateur)." };
+    return { erreur: "Réservé Ã  un éditeur (CHO ou administrateur)." };
   }
 
   const { error } = await supabase.from("personnes").delete().eq("id", id);
