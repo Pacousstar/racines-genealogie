@@ -45,11 +45,13 @@ function Noeud({
   liens,
   couleurById,
   surlignes,
+  racine = false,
 }: {
   noeud: NonNullable<ReturnType<typeof prunerArbre>>;
   liens: MapQuartierFamille;
   couleurById: (id: string | null) => CouleurQuartier | null;
   surlignes: ReadonlySet<string>;
+  racine?: boolean;
 }) {
   const couleur = couleurById(noeud.personne.quartier_id);
   const nomQuartier = liens.quartierNom(noeud.personne.quartier_id);
@@ -99,6 +101,12 @@ function Noeud({
           </>
         )}
       </div>
+      {noeud.enfants.length === 0 && !noeud.conjoint && racine && (
+        <p className="mt-3 max-w-56 text-xs opacity-70">
+          Aucun lien descendant déclaré pour cette personne. Reliez ses enfants
+          : «&nbsp;Modifier&nbsp;» → « Enfants &nbsp;» → « Ajouter un enfant ».
+        </p>
+      )}
       {noeud.enfants.length > 0 && (
         <ul className={styles.arbre}>
           {noeud.enfants.map((enfant) => (
@@ -368,6 +376,7 @@ export default function GrandTableau({
                       liens={labels}
                       couleurById={labels.couleurById}
                       surlignes={surlignes}
+                      racine
                     />
                   ))}
                 </ul>

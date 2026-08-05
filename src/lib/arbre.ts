@@ -189,15 +189,16 @@ export function construitArbre(
   const enfantsConnus = new Set<string>();
   for (const m of enfantsDe.values()) for (const id of m.keys()) enfantsConnus.add(id);
 
-  // Racines : les ancêtres déclarés (★) s'ils existent, sinon les personnes
-  // sans parents. Le père et la mère d'un même enfant sont appariés, et les
-  // conjoints sont déjà affichés dans l'arbre de leur partenaire.
-  const ancetres = personnes
-    .filter((p) => p.est_ancetre === true || p.est_fondateur === true)
-    .sort((a, b) => nomComplet(a).localeCompare(nomComplet(b)));
-  const racines = (ancetres.length ? ancetres : personnes).filter(
-    (p) => p.est_ancetre === true || !enfantsConnus.has(p.id)
-  );
+  // Racines : les ancêtres déclarés (★) en premier, puis les personnes sans
+  // parents. Une personne déjà couverte (conjoint ou co-parent apparié, ou
+  // descendant d'une racine affichée) n'est jamais affichée deux fois.
+  const racines = [...new Set([...personnes])]
+    .sort(
+      (a, b) =>
+        Number(estAncetre(b)) - Number(estAncetre(a)) ||
+        nomComplet(a).localeCompare(nomComplet(b))
+    )
+    .filter((p) => estAncetre(p) || !enfantsConnus.has(p.id));
 
   // Une personne sans parents mais qui est conjoint(e) d'une autre est déjà
   // affichée dans l'arbre de son/sa partenaire : on ne la prend pas en racine.
