@@ -34,6 +34,7 @@ export type PersonneEdition = {
   retraite: boolean;
   residence: string | null;
   crise_2010_2011: boolean;
+  est_ancetre: boolean | null;
   pere: ResultatPersonne | null;
   mere: ResultatPersonne | null;
   conjoint: ResultatPersonne | null;
@@ -158,6 +159,7 @@ export default function FormulaireDeclaration({
   const [retraite, setRetraite] = useState(personne?.retraite ?? false);
   const [residence, setResidence] = useState(personne?.residence ?? "");
   const [crise2010, setCrise2010] = useState(personne?.crise_2010_2011 ?? false);
+  const [estAncetre, setEstAncetre] = useState(personne?.est_ancetre ?? false);
   const [quartierId, setQuartierId] = useState(personne?.quartier_id ?? "");
   const [familleId, setFamilleId] = useState(personne?.famille_id ?? "");
   const [modeNouveauQuartier, setModeNouveauQuartier] = useState(false);
@@ -292,6 +294,7 @@ export default function FormulaireDeclaration({
         retraite,
         residence,
         crise_2010_2011: crise2010,
+        est_ancetre: estAncetre,
         pere: pereId ? pereDetail : null,
         mere: mereId ? mereDetail : null,
         conjoint: conjointId ? conjointDetail : null,
@@ -342,6 +345,7 @@ export default function FormulaireDeclaration({
     setRetraite(personne?.retraite ?? false);
     setResidence(personne?.residence ?? "");
     setCrise2010(personne?.crise_2010_2011 ?? false);
+    setEstAncetre(personne?.est_ancetre ?? false);
     setQuartierId(personne?.quartier_id ?? "");
     setFamilleId(personne?.famille_id ?? "");
     setModeNouveauQuartier(false);
@@ -510,6 +514,16 @@ export default function FormulaireDeclaration({
               className={styleCase}
             />
             <span className="font-medium">Retraité(e)</span>
+          </label>
+          <label className="flex items-center gap-2 text-sm" title="La personne est le sommet de l'arbre : aucune case au-dessus d'elle, badge ★ Ancêtre">
+            <input
+              type="checkbox"
+              checked={estAncetre}
+              onChange={(e) => setEstAncetre(e.target.checked)}
+              className={styleCase}
+            />
+            <span className="font-medium">Ancêtre fondateur</span>
+            <span aria-hidden>★</span>
           </label>
           {champ("Résidence (quartier habité)", residence, setResidence)}
         </div>

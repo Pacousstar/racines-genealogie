@@ -29,6 +29,7 @@ export type Modification = {
   retraite: boolean;
   residence: string;
   crise_2010_2011: boolean;
+  est_ancetre: boolean;
   pere: DetailLienDeclaration;
   mere: DetailLienDeclaration;
   conjoint: DetailLienDeclaration;
@@ -135,6 +136,7 @@ export async function modifier(
       photo_url: m.photo_url?.trim() || null,
       source: m.source,
       fiabilite: m.fiabilite,
+      est_ancetre: m.est_ancetre,
     },
     {
       retraite: m.retraite,

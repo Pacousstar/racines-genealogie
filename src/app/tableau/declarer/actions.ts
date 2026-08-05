@@ -29,6 +29,7 @@ export type Declaration = {
   retraite: boolean;
   residence: string;
   crise_2010_2011: boolean;
+  est_ancetre: boolean;
   pere: DetailLienDeclaration;
   mere: DetailLienDeclaration;
   conjoint: DetailLienDeclaration;
@@ -139,6 +140,7 @@ export async function declarer(
       photo_url: d.photo_url?.trim() || null,
       source: d.source,
       fiabilite: d.fiabilite,
+      est_ancetre: d.est_ancetre,
     },
     {
       retraite: d.retraite,
