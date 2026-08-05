@@ -3,7 +3,7 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import { Plus, RotateCcw, Loader2, X, Camera } from "lucide-react";
+import { Plus, RotateCcw, Loader2, X, Camera, Star } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { declarer } from "@/app/tableau/declarer/actions";
 import { modifier, mettrePhoto } from "@/app/tableau/personnes/actions";
@@ -715,18 +715,26 @@ export default function FormulaireDeclaration({
             />
             <span className="font-medium">Retraité(e)</span>
           </label>
-          <label className="flex items-center gap-2 text-sm" title="La personne est le sommet de l'arbre : aucune case au-dessus d'elle, badge ★ Ancêtre">
-            <input
-              type="checkbox"
-              checked={estAncetre}
-              onChange={(e) => setEstAncetre(e.target.checked)}
-              className={styleCase}
-            />
-            <span className="font-medium">Ancêtre fondateur</span>
-            <span aria-hidden>★</span>
-          </label>
           {champ("Résidence (quartier habité)", residence, setResidence)}
         </div>
+        <label
+          className="mt-4 flex cursor-pointer items-center gap-3 rounded-xl border-2 border-amber-600/60 bg-amber-200/70 px-4 py-3 transition hover:bg-amber-200"
+          title="Cochez pour le/la fondateur(trice) du village : il/elle sera au sommet de l'arbre (badge ★ Ancêtre) et rien ne s'affichera au-dessus."
+        >
+          <input
+            type="checkbox"
+            checked={estAncetre}
+            onChange={(e) => setEstAncetre(e.target.checked)}
+            className="h-5 w-5 accent-amber-700"
+          />
+          <Star
+            className={`h-5 w-5 shrink-0 ${estAncetre ? "text-amber-600" : "text-amber-500/50"}`}
+            aria-hidden
+          />
+          <span className="text-sm font-semibold text-amber-900">
+            Ancêtre fondateur — au sommet de l&apos;arbre (★)
+          </span>
+        </label>
 
         <div className="mt-5 border-t border-amber-700/30 pt-4">
           <div className="flex flex-wrap items-center justify-between gap-2">

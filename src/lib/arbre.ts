@@ -100,10 +100,13 @@ export function construitArbre(
   for (const p of personnes) parId.set(p.id, p);
 
   const enfantsDe = new Map<string, Map<string, number>>();
+  const parentsDe = new Map<string, Set<string>>();
   for (const l of liens) {
     if (!enfantsDe.has(l.parent_id)) enfantsDe.set(l.parent_id, new Map());
     const m = enfantsDe.get(l.parent_id)!;
     m.set(l.enfant_id, l.rang ?? Number.MAX_SAFE_INTEGER);
+    if (!parentsDe.has(l.enfant_id)) parentsDe.set(l.enfant_id, new Set());
+    parentsDe.get(l.enfant_id)!.add(l.parent_id);
   }
 
   const partenaireDe = new Map<string, string>();
@@ -111,6 +114,24 @@ export function construitArbre(
     partenaireDe.set(u.conjoint_1, u.conjoint_2);
     partenaireDe.set(u.conjoint_2, u.conjoint_1);
   }
+
+  // Parent d'un enfant commun : si deux personnes ont un enfant ensemble,
+  // on les considère comme un couple (même sans union déclarée) —
+  // le père et la mère apparaissent alors côte à côte dans l'arbre.
+  const infererPartenaire = (id: string): string | null => {
+    const p = parId.get(id);
+    if (!p) return null;
+    const enfantsIds = [...(enfantsDe.get(id)?.keys() ?? [])];
+    for (const eid of enfantsIds) {
+      const autres = [...(parentsDe.get(eid) ?? [])].filter((pid) => pid !== id);
+      if (autres.length === 0) continue;
+      const opposé = autres.find((pid) => parId.get(pid)?.sexe !== p.sexe);
+      if (opposé) return opposé;
+      const candidat = autres.find((pid) => parId.get(pid));
+      if (candidat) return candidat;
+    }
+    return null;
+  };
 
   const memo = new Map<string, ArbreNoeud>();
 
@@ -129,7 +150,7 @@ export function construitArbre(
     const nouveauVisite = new Set(visite);
     nouveauVisite.add(id);
 
-    const partenaireId = partenaireDe.get(id);
+    const partenaireId = partenaireDe.get(id) ?? infererPartenaire(id);
     const conjoint = partenaireId ? parId.get(partenaireId) ?? null : null;
     if (partenaireId) nouveauVisite.add(partenaireId);
 
@@ -168,13 +189,15 @@ export function construitArbre(
   const enfantsConnus = new Set<string>();
   for (const m of enfantsDe.values()) for (const id of m.keys()) enfantsConnus.add(id);
 
-  const racines = [...new Set([...personnes])]
-    .sort(
-      (a, b) =>
-        Number(b.est_ancetre === true) - Number(a.est_ancetre === true) ||
-        nomComplet(a).localeCompare(nomComplet(b))
-    )
-    .filter((p) => p.est_ancetre === true || !enfantsConnus.has(p.id));
+  // Racines : les ancêtres déclarés (★) s'ils existent, sinon les personnes
+  // sans parents. Le père et la mère d'un même enfant sont appariés, et les
+  // conjoints sont déjà affichés dans l'arbre de leur partenaire.
+  const ancetres = personnes
+    .filter((p) => p.est_ancetre === true || p.est_fondateur === true)
+    .sort((a, b) => nomComplet(a).localeCompare(nomComplet(b)));
+  const racines = (ancetres.length ? ancetres : personnes).filter(
+    (p) => p.est_ancetre === true || !enfantsConnus.has(p.id)
+  );
 
   // Une personne sans parents mais qui est conjoint(e) d'une autre est déjà
   // affichée dans l'arbre de son/sa partenaire : on ne la prend pas en racine.
