@@ -116,6 +116,10 @@ CREATE TABLE IF NOT EXISTS unions (
     UNIQUE (conjoint_1, conjoint_2)
 );
 
+-- Rang : ordre des unions d'une même personne — le 1er (rang le plus petit)
+-- est le « conjoint principal » affiché en couple dans l'arbre.
+ALTER TABLE public.unions ADD COLUMN IF NOT EXISTS rang INT;
+
 -- =====================================================================
 -- 5. ENFANTS (liens parent → enfant)
 -- =====================================================================
@@ -165,33 +169,84 @@ ALTER TABLE public.enfants     ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.profiles    ENABLE ROW LEVEL SECURITY;
 
 -- Quartiers : lecture pour tout connecté, écriture éditeur/admin
-CREATE POLICY "quartiers_select"  ON public.quartiers FOR SELECT USING (auth.role() = 'authenticated');
-CREATE POLICY "quartiers_write"   ON public.quartiers FOR ALL USING (public.is_editeur());
-CREATE POLICY "quartiers_insert"  ON public.quartiers FOR INSERT WITH CHECK (public.is_editeur());
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='quartiers' AND policyname='quartiers_select') THEN
+        CREATE POLICY "quartiers_select" ON public.quartiers FOR SELECT USING (auth.role() = 'authenticated');
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='quartiers' AND policyname='quartiers_write') THEN
+        CREATE POLICY "quartiers_write" ON public.quartiers FOR ALL USING (public.is_editeur());
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='quartiers' AND policyname='quartiers_insert') THEN
+        CREATE POLICY "quartiers_insert" ON public.quartiers FOR INSERT WITH CHECK (public.is_editeur());
+    END IF;
+END $$;
 
 -- Familles : idem
-CREATE POLICY "familles_select"   ON public.familles FOR SELECT USING (auth.role() = 'authenticated');
-CREATE POLICY "familles_write"    ON public.familles FOR ALL USING (public.is_editeur());
-CREATE POLICY "familles_insert"   ON public.familles FOR INSERT WITH CHECK (public.is_editeur());
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='familles' AND policyname='familles_select') THEN
+        CREATE POLICY "familles_select" ON public.familles FOR SELECT USING (auth.role() = 'authenticated');
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='familles' AND policyname='familles_write') THEN
+        CREATE POLICY "familles_write" ON public.familles FOR ALL USING (public.is_editeur());
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='familles' AND policyname='familles_insert') THEN
+        CREATE POLICY "familles_insert" ON public.familles FOR INSERT WITH CHECK (public.is_editeur());
+    END IF;
+END $$;
 
 -- Personnes : idem
-CREATE POLICY "personnes_select"  ON public.personnes FOR SELECT USING (auth.role() = 'authenticated');
-CREATE POLICY "personnes_write"   ON public.personnes FOR ALL USING (public.is_editeur());
-CREATE POLICY "personnes_insert"  ON public.personnes FOR INSERT WITH CHECK (public.is_editeur());
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='personnes' AND policyname='personnes_select') THEN
+        CREATE POLICY "personnes_select" ON public.personnes FOR SELECT USING (auth.role() = 'authenticated');
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='personnes' AND policyname='personnes_write') THEN
+        CREATE POLICY "personnes_write" ON public.personnes FOR ALL USING (public.is_editeur());
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='personnes' AND policyname='personnes_insert') THEN
+        CREATE POLICY "personnes_insert" ON public.personnes FOR INSERT WITH CHECK (public.is_editeur());
+    END IF;
+END $$;
 
 -- Unions : idem
-CREATE POLICY "unions_select"     ON public.unions FOR SELECT USING (auth.role() = 'authenticated');
-CREATE POLICY "unions_write"      ON public.unions FOR ALL USING (public.is_editeur());
-CREATE POLICY "unions_insert"     ON public.unions FOR INSERT WITH CHECK (public.is_editeur());
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='unions' AND policyname='unions_select') THEN
+        CREATE POLICY "unions_select" ON public.unions FOR SELECT USING (auth.role() = 'authenticated');
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='unions' AND policyname='unions_write') THEN
+        CREATE POLICY "unions_write" ON public.unions FOR ALL USING (public.is_editeur());
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='unions' AND policyname='unions_insert') THEN
+        CREATE POLICY "unions_insert" ON public.unions FOR INSERT WITH CHECK (public.is_editeur());
+    END IF;
+END $$;
 
 -- Enfants : idem
-CREATE POLICY "enfants_select"    ON public.enfants FOR SELECT USING (auth.role() = 'authenticated');
-CREATE POLICY "enfants_write"     ON public.enfants FOR ALL USING (public.is_editeur());
-CREATE POLICY "enfants_insert"    ON public.enfants FOR INSERT WITH CHECK (public.is_editeur());
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='enfants' AND policyname='enfants_select') THEN
+        CREATE POLICY "enfants_select" ON public.enfants FOR SELECT USING (auth.role() = 'authenticated');
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='enfants' AND policyname='enfants_write') THEN
+        CREATE POLICY "enfants_write" ON public.enfants FOR ALL USING (public.is_editeur());
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='enfants' AND policyname='enfants_insert') THEN
+        CREATE POLICY "enfants_insert" ON public.enfants FOR INSERT WITH CHECK (public.is_editeur());
+    END IF;
+END $$;
 
--- Profiles : chacun lit SONT role ; admin lit tout ; écriture admin only
-CREATE POLICY "profiles_select_own"  ON public.profiles FOR SELECT USING (auth.uid() = id OR public.is_admin());
-CREATE POLICY "profiles_update"      ON public.profiles FOR UPDATE USING (public.is_admin());
+-- Profiles : chacun lit SON rôle ; admin lit tout ; écriture admin only
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='profiles' AND policyname='profiles_select_own') THEN
+        CREATE POLICY "profiles_select_own" ON public.profiles FOR SELECT USING (auth.uid() = id OR public.is_admin());
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='public' AND tablename='profiles' AND policyname='profiles_update') THEN
+        CREATE POLICY "profiles_update" ON public.profiles FOR UPDATE USING (public.is_admin());
+    END IF;
+END $$;
 
 -- =====================================================================
 -- 7. STOCKAGE PHOTOS (bucket privé « photos »)
@@ -202,14 +257,25 @@ VALUES ('photos', 'photos', false, 5242880, ARRAY['image/jpeg','image/png','imag
 ON CONFLICT (id) DO NOTHING;
 
 -- Lecture fiche technique : éditeur/admin gère ; le reste est servi via API service role
-CREATE POLICY "photos_editeur_select" ON storage.objects FOR SELECT
-  USING (bucket_id = 'photos' AND public.is_editeur());
-CREATE POLICY "photos_editeur_insert" ON storage.objects FOR INSERT
-  WITH CHECK (bucket_id = 'photos' AND public.is_editeur());
-CREATE POLICY "photos_editeur_update" ON storage.objects FOR UPDATE
-  USING (bucket_id = 'photos' AND public.is_editeur());
-CREATE POLICY "photos_editeur_delete" ON storage.objects FOR DELETE
-  USING (bucket_id = 'photos' AND public.is_editeur());
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='storage' AND tablename='objects' AND policyname='photos_editeur_select') THEN
+        CREATE POLICY "photos_editeur_select" ON storage.objects FOR SELECT
+          USING (bucket_id = 'photos' AND public.is_editeur());
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='storage' AND tablename='objects' AND policyname='photos_editeur_insert') THEN
+        CREATE POLICY "photos_editeur_insert" ON storage.objects FOR INSERT
+          WITH CHECK (bucket_id = 'photos' AND public.is_editeur());
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='storage' AND tablename='objects' AND policyname='photos_editeur_update') THEN
+        CREATE POLICY "photos_editeur_update" ON storage.objects FOR UPDATE
+          USING (bucket_id = 'photos' AND public.is_editeur());
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname='storage' AND tablename='objects' AND policyname='photos_editeur_delete') THEN
+        CREATE POLICY "photos_editeur_delete" ON storage.objects FOR DELETE
+          USING (bucket_id = 'photos' AND public.is_editeur());
+    END IF;
+END $$;
 
 -- =====================================================================
 -- 8. VUE — arbre complet (personne + infos lien)

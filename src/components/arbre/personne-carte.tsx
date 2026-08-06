@@ -106,7 +106,7 @@ export default function PersonneCarte({
           )}
           {famille && (
             <span className="truncate rounded-full bg-current/5 px-1.5 py-0.5 font-medium opacity-75">
-              Famille {famille}
+              {/^Famille\s+/i.test(famille) ? famille : `Famille ${famille}`}
             </span>
           )}
         </div>
