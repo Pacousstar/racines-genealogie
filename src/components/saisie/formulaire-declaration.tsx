@@ -46,10 +46,10 @@ const SOURCES = ["Témoignage du CHO", "Registre", "Document", "Autre"];
 const FIABILITES = ["confirmé", "probable", "en cours"];
 
 const styleEncart =
-  "rounded-2xl border-2 border-amber-600/50 bg-amber-100/80 p-5";
+  "rounded-2xl border-2 border-orange-700 bg-orange-400 p-5";
 const styleLegende =
-  "px-2 text-sm font-bold uppercase tracking-wide text-amber-800";
-const styleCase = "h-4 w-4 accent-amber-700";
+  "px-2 text-sm font-bold uppercase tracking-wide text-orange-950";
+const styleCase = "h-4 w-4 accent-orange-800";
 
 function Radio({
   checked,
@@ -66,7 +66,7 @@ function Radio({
       onClick={onChange}
       className={`rounded-lg border px-4 py-2.5 text-sm font-semibold transition ${
         checked
-          ? "border-emerald-700 bg-emerald-700 text-white"
+          ? "border-orange-800 bg-orange-800 text-white"
           : "border-current/20 hover:bg-current/5"
       }`}
     >
@@ -170,7 +170,7 @@ function BoutonMode({
       type="button"
       onClick={onClick}
       className={`rounded px-2 py-1 text-[11px] font-semibold transition ${
-        actif ? "bg-amber-800 text-white" : "bg-current/10 hover:bg-current/20"
+        actif ? "bg-orange-800 text-white" : "bg-current/10 hover:bg-current/20"
       }`}
     >
       {children}
@@ -190,7 +190,7 @@ function ChampNouveau({
   const maj = (patch: Partial<PersonneNouvelle>) =>
     setEtat({ ...etat, ...patch });
   return (
-    <div className="rounded-xl border border-emerald-700/40 bg-emerald-50/60 p-3">
+    <div className="rounded-xl border border-orange-700/70 bg-orange-400 p-3">
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="flex flex-col gap-1 text-sm">
           <span className="font-medium">Nom</span>
@@ -767,7 +767,7 @@ export default function FormulaireDeclaration({
           {champ("Résidence (quartier habité)", residence, setResidence)}
         </div>
         <label
-          className="mt-4 flex cursor-pointer items-center gap-3 rounded-xl border-2 border-amber-600/60 bg-amber-200/70 px-4 py-3 transition hover:bg-amber-200"
+          className="mt-4 flex cursor-pointer items-center gap-3 rounded-xl border-2 border-orange-700 bg-orange-400 px-4 py-3 transition hover:bg-orange-300"
           title="Cochez pour le/la fondateur(trice) du village : il/elle sera au sommet de l'arbre (badge ★ Ancêtre) et rien ne s'affichera au-dessus."
         >
           <input
@@ -777,23 +777,23 @@ export default function FormulaireDeclaration({
             className="h-5 w-5 accent-amber-700"
           />
           <Star
-            className={`h-5 w-5 shrink-0 ${estAncetre ? "text-amber-600" : "text-amber-500/50"}`}
+            className={`h-5 w-5 shrink-0 ${estAncetre ? "text-orange-800" : "text-orange-900/40"}`}
             aria-hidden
           />
-          <span className="text-sm font-semibold text-amber-900">
+          <span className="text-sm font-semibold text-orange-950">
             Ancêtre fondateur — au sommet de l&apos;arbre (★)
           </span>
         </label>
 
-        <div className="mt-5 border-t border-amber-700/30 pt-4">
+        <div className="mt-5 border-t border-orange-800/40 pt-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <span className="text-sm font-bold uppercase tracking-wide text-amber-800">
+            <span className="text-sm font-bold uppercase tracking-wide text-orange-950">
               Conjoint(e)s
             </span>
             <button
               type="button"
               onClick={ajouterConjoint}
-              className="inline-flex items-center gap-1 rounded-lg border border-amber-700/40 px-2.5 py-1 text-xs font-semibold text-amber-800 transition hover:bg-amber-700/10"
+              className="inline-flex items-center gap-1 rounded-lg border border-orange-800/50 px-2.5 py-1 text-xs font-semibold text-orange-950 transition hover:bg-orange-700/10"
             >
               <Plus className="h-3.5 w-3.5" aria-hidden /> Ajouter un(e) conjoint(e)
             </button>
@@ -813,7 +813,7 @@ export default function FormulaireDeclaration({
               conjoints.map((c, index) => (
                 <div
                   key={index}
-                  className="relative rounded-xl border border-amber-600/30 bg-amber-100/50 p-3"
+                  className="relative rounded-xl border border-orange-700/40 bg-orange-400 p-3"
                 >
                   <div className="mb-1 flex items-center justify-between gap-2">
                     <span className="text-xs font-semibold uppercase tracking-wide opacity-70">
@@ -821,7 +821,7 @@ export default function FormulaireDeclaration({
                     </span>
                     <div className="flex items-center gap-1.5">
                       {index === 0 && conjoints.length > 1 && (
-                        <span className="rounded-full bg-amber-700/15 px-2 py-0.5 text-[10px] font-bold text-amber-800">
+                        <span className="rounded-full bg-orange-900/25 px-2 py-0.5 text-[10px] font-bold text-orange-950">
                           Principal
                         </span>
                       )}
@@ -872,7 +872,7 @@ export default function FormulaireDeclaration({
           </div>
         </div>
 
-        <div className="mt-5 flex flex-wrap items-center gap-4 border-t border-amber-700/30 pt-4">
+        <div className="mt-5 flex flex-wrap items-center gap-4 border-t border-orange-800/40 pt-4">
             <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-emerald-800 text-2xl font-bold text-white">
               {photoSrc || apercu ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -903,7 +903,7 @@ export default function FormulaireDeclaration({
             <div className="min-w-0 flex-1">
               <span className="text-sm font-medium">Photo</span>
               <div className="mt-1 flex flex-wrap items-center gap-2">
-                <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-amber-700/40 px-3 py-2 text-sm font-semibold text-amber-800 transition hover:bg-amber-700/10">
+                <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-orange-800/50 px-3 py-2 text-sm font-semibold text-orange-950 transition hover:bg-orange-700/10">
                   {photoEnvoi ? (
                     <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
                   ) : (
@@ -1021,7 +1021,7 @@ export default function FormulaireDeclaration({
           </label>
         )}
 
-        <div className="mt-5 border-t border-amber-700/30 pt-4">
+        <div className="mt-5 border-t border-orange-800/40 pt-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <span className="text-sm font-medium">
               Enfants de cette personne
@@ -1029,7 +1029,7 @@ export default function FormulaireDeclaration({
             <button
               type="button"
               onClick={ajouterEnfant}
-              className="inline-flex items-center gap-1 rounded-lg border border-amber-700/40 px-2.5 py-1 text-xs font-semibold text-amber-800 transition hover:bg-amber-700/10"
+              className="inline-flex items-center gap-1 rounded-lg border border-orange-800/50 px-2.5 py-1 text-xs font-semibold text-orange-950 transition hover:bg-orange-700/10"
             >
               <Plus className="h-3.5 w-3.5" aria-hidden /> Ajouter un enfant
             </button>
@@ -1043,7 +1043,7 @@ export default function FormulaireDeclaration({
               {enfants.map((enfant, index) => (
                 <div
                   key={index}
-                  className="relative rounded-xl border border-amber-600/30 bg-amber-100/50 p-3"
+                  className="relative rounded-xl border border-orange-700/40 bg-orange-400 p-3"
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0 flex-1">
@@ -1136,7 +1136,7 @@ export default function FormulaireDeclaration({
                       )}
                     </div>
                   )}
-                  <div className="mt-3 border-t border-amber-700/20 pt-2">
+                  <div className="mt-3 border-t border-orange-800/30 pt-2">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <span className="text-xs font-semibold uppercase tracking-wide opacity-70">
                         {sexe === "M"
