@@ -30,6 +30,7 @@ export type Union = {
   conjoint_1: string;
   conjoint_2: string;
   date_union: string | null;
+  rang?: number | null;
 };
 
 export type Filtre = {
@@ -46,9 +47,18 @@ export const FILTRE_VIDE: Filtre = {
   fiabilite: "tous",
 };
 
+// Un conjoint secondaire : la personne reliée (autre que le conjoint
+// principal) et les enfants qu'elle a eus AVEC cette personne
+// (père + mère tous deux reliés à l'enfant).
+export type AutreCouple = {
+  conjoint: Personne;
+  enfants: ArbreNoeud[];
+};
+
 export type ArbreNoeud = {
   personne: Personne;
   conjoint: Personne | null;
+  autresConjoints: AutreCouple[];
   enfants: ArbreNoeud[];
   profondeur: number;
 };
@@ -109,38 +119,53 @@ export function construitArbre(
     parentsDe.get(l.enfant_id)!.add(l.parent_id);
   }
 
-  const partenaireDe = new Map<string, string>();
+  // Conjoints déclarés (unions), triés par rang croissant : le premier rang
+  // est le « conjoint principal » (affiché en couple dans l'arbre).
+  const declareDe = new Map<string, Array<{ id: string; rang: number }>>();
   for (const u of unions) {
-    partenaireDe.set(u.conjoint_1, u.conjoint_2);
-    partenaireDe.set(u.conjoint_2, u.conjoint_1);
+    const { conjoint_1: a, conjoint_2: b } = u;
+    if (a === b || !parId.has(a) || !parId.has(b)) continue;
+    const r = u.rang ?? Number.MAX_SAFE_INTEGER;
+    if (!declareDe.has(a)) declareDe.set(a, []);
+    declareDe.get(a)!.push({ id: b, rang: r });
+    if (!declareDe.has(b)) declareDe.set(b, []);
+    declareDe.get(b)!.push({ id: a, rang: r });
+  }
+  for (const liste of declareDe.values()) {
+    liste.sort((x, y) => x.rang - y.rang || x.id.localeCompare(y.id));
   }
 
-  // Parent d'un enfant commun : si deux personnes ont un enfant ensemble,
-  // on les considère comme un couple (même sans union déclarée) —
-  // le père et la mère apparaissent alors côte à côte dans l'arbre.
-  const infererPartenaire = (id: string): string | null => {
+  // Parents d'un même enfant sans union déclarée : considérés comme conjoints
+  // afin d'afficher père et mère côte à côte (avec leurs enfants sous le couple).
+  const infererPartenaires = (id: string): string[] => {
+    const deja = new Set((declareDe.get(id) ?? []).map((c) => c.id));
     const p = parId.get(id);
-    if (!p) return null;
-    const enfantsIds = [...(enfantsDe.get(id)?.keys() ?? [])];
-    for (const eid of enfantsIds) {
-      const autres = [...(parentsDe.get(eid) ?? [])].filter((pid) => pid !== id);
-      if (autres.length === 0) continue;
-      const opposé = autres.find((pid) => parId.get(pid)?.sexe !== p.sexe);
-      if (opposé) return opposé;
-      const candidat = autres.find((pid) => parId.get(pid));
-      if (candidat) return candidat;
+    if (!p) return [];
+    const ids: string[] = [];
+    for (const eid of enfantsDe.get(id)?.keys() ?? []) {
+      for (const coparentId of parentsDe.get(eid) ?? []) {
+        if (coparentId === id || deja.has(coparentId) || !parId.get(coparentId)) continue;
+        if (ids.includes(coparentId)) continue;
+        const cp = parId.get(coparentId)!;
+        // On privilégie le parent de sexe opposé ; à défaut, tout co-parent.
+        if (p.sexe && cp.sexe && p.sexe !== cp.sexe) {
+          ids.unshift(coparentId);
+        } else {
+          ids.push(coparentId);
+        }
+      }
     }
-    return null;
+    return ids;
   };
 
-  const memo = new Map<string, ArbreNoeud>();
+  const memoire = new Map<string, ArbreNoeud>();
 
   const construire = (
     id: string,
     visite: Set<string>,
     profondeur: number
   ): ArbreNoeud | null => {
-    const cache = memo.get(id);
+    const cache = memoire.get(id);
     if (cache) return cache;
     if (visite.has(id) || profondeur > 40) return null;
 
@@ -150,39 +175,81 @@ export function construitArbre(
     const nouveauVisite = new Set(visite);
     nouveauVisite.add(id);
 
-    const partenaireId = partenaireDe.get(id) ?? infererPartenaire(id);
-    const conjoint = partenaireId ? parId.get(partenaireId) ?? null : null;
-    if (partenaireId) nouveauVisite.add(partenaireId);
+    const partenairesIds = [
+      ...(declareDe.get(id) ?? [])
+        .map((c) => (parId.has(c.id) ? c.id : null))
+        .filter((c): c is string => c !== null),
+      ...infererPartenaires(id),
+    ];
 
-    // Enfants du COUPLE : union des enfants du parent et de son/sa conjoint(e),
-    // pour qu'un enfant relié à la mère seulement apparaisse quand même sous le père.
-    const enfantsDuCouple = new Map<string, number>();
-    const ajouterEnfants = (parentId: string) => {
-      for (const [enfantId, rang] of enfantsDe.get(parentId) ?? []) {
-        enfantsDuCouple.set(enfantId, Math.min(enfantsDuCouple.get(enfantId) ?? rang, rang));
+    const principalId = partenairesIds[0] ?? null;
+    const conjoint = principalId ? parId.get(principalId) ?? null : null;
+    if (conjoint) nouveauVisite.add(conjoint.id);
+    const autresIds = partenairesIds.slice(1);
+
+    // Chaque enfant de cette personne appartient au couple formé avec l'autre
+    // parent, quand cet autre parent est bien l'un de ses conjoints.
+    const parCouple = new Map<string, Map<string, number>>();
+    const sansAutreParent = new Map<string, number>();
+    const parentsDeEnfant = (eid: string) => parentsDe.get(eid) ?? new Set<string>();
+
+    for (const [eid, rang] of enfantsDe.get(id) ?? []) {
+      const generateur = partenairesIds.find((pid) => parentsDeEnfant(eid).has(pid));
+      if (generateur) {
+        if (!parCouple.has(generateur)) parCouple.set(generateur, new Map());
+        parCouple.get(generateur)!.set(eid, rang);
+      } else {
+        sansAutreParent.set(eid, rang);
       }
+    }
+
+    const trierEtConstruire = (enfants: Map<string, number>) =>
+      Array.from(enfants)
+        .map(([enfantId, rang]) => {
+          const enfant = parId.get(enfantId);
+          return enfant ? { enfant, rang } : null;
+        })
+        .filter((x): x is { enfant: Personne; rang: number } => x !== null)
+        .sort(
+          (a, b) =>
+            a.rang - b.rang ||
+            (anneeDe(a.enfant.date_naissance) ?? 99999) -
+              (anneeDe(b.enfant.date_naissance) ?? 99999) ||
+            nomComplet(a.enfant).localeCompare(nomComplet(b.enfant))
+        )
+        .map(({ enfant }) => construire(enfant.id, nouveauVisite, profondeur + 1))
+        .filter((n): n is ArbreNoeud => n !== null);
+
+    // Enfants du couple principal : ceux partagés avec le conjoint principal,
+    // plus ceux dont aucun autre parent déclaré n'est conjoint.
+    const enfantsPrincipal = new Map<string, number>(sansAutreParent);
+    if (principalId && parCouple.has(principalId)) {
+      for (const [eid, rang] of parCouple.get(principalId)!) {
+        enfantsPrincipal.set(eid, rang);
+      }
+    }
+
+    const autresConjoints: AutreCouple[] = [];
+    for (const autreId of autresIds) {
+      const autresCParent = parCouple.get(autreId);
+      const autre = parId.get(autreId);
+      if (!autre) continue;
+      autresConjoints.push({
+        conjoint: autre,
+        enfants: autresCParent
+          ? trierEtConstruire(autresCParent)
+          : [],
+      });
+    }
+
+    const noeud: ArbreNoeud = {
+      personne: p,
+      conjoint,
+      autresConjoints,
+      enfants: trierEtConstruire(enfantsPrincipal),
+      profondeur,
     };
-    ajouterEnfants(id);
-    if (partenaireId) ajouterEnfants(partenaireId);
-
-    const enfants = Array.from(enfantsDuCouple)
-      .map(([enfantId, rang]) => {
-        const enfant = parId.get(enfantId);
-        return enfant ? { enfant, rang } : null;
-      })
-      .filter((x): x is { enfant: Personne; rang: number } => x !== null)
-      .sort(
-        (a, b) =>
-          a.rang - b.rang ||
-          (anneeDe(a.enfant.date_naissance) ?? 99999) -
-            (anneeDe(b.enfant.date_naissance) ?? 99999) ||
-          nomComplet(a.enfant).localeCompare(nomComplet(b.enfant))
-      )
-      .map(({ enfant }) => construire(enfant.id, nouveauVisite, profondeur + 1))
-      .filter((n): n is ArbreNoeud => n !== null);
-
-    const noeud: ArbreNoeud = { personne: p, conjoint, enfants, profondeur };
-    memo.set(id, noeud);
+    memoire.set(id, noeud);
     return noeud;
   };
 
@@ -200,15 +267,13 @@ export function construitArbre(
     )
     .filter((p) => estAncetre(p) || !enfantsConnus.has(p.id));
 
-  // Une personne sans parents mais qui est conjoint(e) d'une autre est déjà
-  // affichée dans l'arbre de son/sa partenaire : on ne la prend pas en racine.
-  // On construit les racines (ancêtres en premier) et on marque toutes les
-  // personnes couvertes (dont les conjoints) pour ne jamais les afficher deux fois.
   const couverts = new Set<string>();
   const couvrir = (n: ArbreNoeud) => {
     couverts.add(n.personne.id);
     if (n.conjoint) couverts.add(n.conjoint.id);
+    for (const a of n.autresConjoints) couverts.add(a.conjoint.id);
     for (const e of n.enfants) couvrir(e);
+    for (const a of n.autresConjoints) for (const e of a.enfants) couvrir(e);
   };
 
   const visiteGlobale = new Set<string>();
@@ -247,6 +312,22 @@ export function prunerArbre(
   const enfants = noeud.enfants
     .map((e) => prunerArbre(e, match))
     .filter((n): n is ArbreNoeud => n !== null);
-  const garde = match(noeud.personne) || enfants.length > 0;
-  return garde ? { ...noeud, enfants } : null;
+  const autresConjoints = noeud.autresConjoints
+    .map((a) => ({
+      conjoint: a.conjoint,
+      enfants: a.enfants
+        .map((e) => prunerArbre(e, match))
+        .filter((n): n is ArbreNoeud => n !== null),
+    }))
+    .filter(
+      (a) =>
+        a.enfants.length > 0 ||
+        match(a.conjoint)
+    );
+  const garde =
+    match(noeud.personne) ||
+    enfants.length > 0 ||
+    autresConjoints.length > 0 ||
+    Boolean(noeud.conjoint && match(noeud.conjoint));
+  return garde ? { ...noeud, enfants, autresConjoints } : null;
 }

@@ -12,10 +12,18 @@ export type PersonneNouvelle = {
   decede: boolean;
 };
 
+export type ConjointDeclaration = {
+  id: string | null;
+  nouveau: PersonneNouvelle | null;
+  detail: DetailLienDeclaration;
+};
+
 export type EnfantDeclaration = {
   id: string | null;
   nouveau: PersonneNouvelle | null;
   date_naissance: string;
   decede: boolean;
   date_deces: string;
+  autre_parent_id: string | null;
+  autre_parent_nouveau: PersonneNouvelle | null;
 };

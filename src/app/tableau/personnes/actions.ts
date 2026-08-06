@@ -4,6 +4,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { obtenirOuCreerQuartier, obtenirOuCreerFamille } from "@/lib/nomenclature";
 import type {
+  ConjointDeclaration,
   DetailLienDeclaration,
   EnfantDeclaration,
   PersonneNouvelle,
@@ -24,10 +25,9 @@ export type Modification = {
   fiabilite: string;
   pere_id: string | null;
   mere_id: string | null;
-  conjoint_id: string | null;
+  conjoints: ConjointDeclaration[];
   pere_nouveau: PersonneNouvelle | null;
   mere_nouveau: PersonneNouvelle | null;
-  conjoint_nouveau: PersonneNouvelle | null;
   nouveau_quartier: string;
   nouvelle_famille: string;
   retraite: boolean;
@@ -36,7 +36,6 @@ export type Modification = {
   est_ancetre: boolean;
   pere: DetailLienDeclaration;
   mere: DetailLienDeclaration;
-  conjoint: DetailLienDeclaration;
   enfants: EnfantDeclaration[];
 };
 
@@ -71,8 +70,46 @@ async function appliquerEnfant(
   }
 }
 
+async function creerNouvellePersonne(
+  supabase: SupabaseClient,
+  n: PersonneNouvelle,
+  source: string
+): Promise<string | null> {
+  const { data, error } = await supabase
+    .from("personnes")
+    .insert({
+      nom: n.nom.trim(),
+      prenom: n.prenom?.trim() || null,
+      sexe: n.sexe,
+      vivant: !n.decede,
+      date_naissance: n.date_naissance?.trim() || null,
+      date_deces: n.decede ? n.date_deces?.trim() || null : null,
+      fiabilite: "confirmé",
+      source,
+    })
+    .select("id")
+    .single();
+  return error || !data ? null : data.id;
+}
+
+async function insererUnion(
+  supabase: SupabaseClient,
+  conjointA: string,
+  conjointB: string,
+  rang: number
+): Promise<void> {
+  const essai = await supabase
+    .from("unions")
+    .insert({ conjoint_1: conjointA, conjoint_2: conjointB, type: "mariage", rang });
+  if (essai.error && COLONNE_MANQUANTE.test(essai.error.message)) {
+    await supabase
+      .from("unions")
+      .insert({ conjoint_1: conjointA, conjoint_2: conjointB, type: "mariage" });
+  }
+}
+
 // Repli si les nouvelles colonnes (retraite, residence, crise_2010_2011)
-// n'ont pas encore été ajoutées dans Supabase —” la mise Ã  jour reste possible.
+// n'ont pas encore été ajoutées dans Supabase — la mise à jour reste possible.
 const COLONNE_MANQUANTE = /column .* does not exist|could not find the column/i;
 
 async function majPersonne(
@@ -109,7 +146,7 @@ export async function modifier(
     .single();
   const role = prof?.role;
   if (role !== "editeur" && role !== "admin") {
-    return { erreur: "Réservé Ã  un éditeur (CHO ou administrateur)." };
+    return { erreur: "Réservé à un éditeur (CHO ou administrateur)." };
   }
 
   const nom = m.nom.trim();
@@ -151,7 +188,7 @@ export async function modifier(
   );
 
   if (error) {
-    return { erreur: `Mise Ã  jour impossible : ${error.message}` };
+    return { erreur: `Mise à jour impossible : ${error.message}` };
   }
 
   await supabase.from("enfants").delete().eq("enfant_id", id);
@@ -167,21 +204,7 @@ export async function modifier(
   for (const { cle, nouveau } of parents) {
     let parentId = m[cle];
     if (!parentId && nouveau?.nom?.trim()) {
-      const { data: prov, error: errProv } = await supabase
-        .from("personnes")
-        .insert({
-          nom: nouveau.nom.trim(),
-          prenom: nouveau.prenom?.trim() || null,
-          sexe: nouveau.sexe,
-          vivant: !nouveau.decede,
-          date_naissance: nouveau.date_naissance?.trim() || null,
-          date_deces: nouveau.decede ? nouveau.date_deces?.trim() || null : null,
-          fiabilite: "confirmé",
-          source: m.source,
-        })
-        .select("id")
-        .single();
-      if (!errProv && prov) parentId = prov.id;
+      parentId = await creerNouvellePersonne(supabase, nouveau, m.source);
     }
     if (parentId) {
       await supabase.from("enfants").insert({ parent_id: parentId, enfant_id: id });
@@ -195,61 +218,72 @@ export async function modifier(
     .delete()
     .or(`conjoint_1.eq.${id},conjoint_2.eq.${id}`);
 
-  let conjointId = m.conjoint_id;
-  if (!conjointId && m.conjoint_nouveau?.nom?.trim()) {
-    const { data: prov, error: errProv } = await supabase
-      .from("personnes")
-      .insert({
-        nom: m.conjoint_nouveau.nom.trim(),
-        prenom: m.conjoint_nouveau.prenom?.trim() || null,
-        sexe: m.conjoint_nouveau.sexe,
-        vivant: !m.conjoint_nouveau.decede,
-        date_naissance: m.conjoint_nouveau.date_naissance?.trim() || null,
-        date_deces: m.conjoint_nouveau.decede
-          ? m.conjoint_nouveau.date_deces?.trim() || null
-          : null,
-        fiabilite: "confirmé",
-        source: m.source,
-      })
-      .select("id")
-      .single();
-    if (!errProv && prov) conjointId = prov.id;
+  // Conjoint(e)s : le premier déclaré (rang 0) est le conjoint principal.
+  for (const [i, conjoint] of (m.conjoints ?? []).entries()) {
+    let conjointId = conjoint.id;
+    if (!conjointId && conjoint.nouveau?.nom?.trim()) {
+      conjointId = await creerNouvellePersonne(supabase, conjoint.nouveau, m.source);
+    }
+    if (!conjointId) continue;
+    await insererUnion(supabase, id, conjointId, i);
+    await appliquerDetailLien(supabase, conjointId, conjoint.detail);
   }
 
-  if (conjointId) {
-    await supabase
-      .from("unions")
-      .insert({ conjoint_1: id, conjoint_2: conjointId, type: "mariage" });
-    await appliquerDetailLien(supabase, conjointId, m.conjoint);
-  }
+  // Enfants : on remplace les liens parent → enfant, et pour chaque enfant on
+  // réécrit aussi le lien vers son AUTRE parent (père ou mère), pour que les
+  // enfants de X et de Y ne soient pas mélangés.
+  const { data: anciensEnfants } = await supabase
+    .from("enfants")
+    .select("enfant_id")
+    .eq("parent_id", id);
 
   await supabase.from("enfants").delete().eq("parent_id", id);
+
+  const enfantsIdsGardes = new Set(
+    (m.enfants ?? [])
+      .map((e) => e.id)
+      .filter((x): x is string => Boolean(x))
+  );
+  for (const ancien of anciensEnfants ?? []) {
+    if (enfantsIdsGardes.has(ancien.enfant_id)) continue;
+    // Enfant retiré de la déclaration : on retire aussi son autre lien de
+    // parenté pour que le couple ne le compte plus dans l'arbre.
+    await supabase
+      .from("enfants")
+      .delete()
+      .eq("enfant_id", ancien.enfant_id)
+      .neq("parent_id", id);
+  }
+
   for (const [index, enfant] of (m.enfants ?? []).entries()) {
     let enfantId = enfant.id;
     if (!enfantId && enfant.nouveau?.nom?.trim()) {
-      const { data: prov, error: errProv } = await supabase
-        .from("personnes")
-        .insert({
-          nom: enfant.nouveau.nom.trim(),
-          prenom: enfant.nouveau.prenom?.trim() || null,
-          sexe: enfant.nouveau.sexe,
-          vivant: !enfant.nouveau.decede,
-          date_naissance: enfant.nouveau.date_naissance?.trim() || null,
-          date_deces: enfant.nouveau.decede
-            ? enfant.nouveau.date_deces?.trim() || null
-            : null,
-          fiabilite: "confirmé",
-          source: m.source,
-        })
-        .select("id")
-        .single();
-      if (!errProv && prov) enfantId = prov.id;
+      enfantId = await creerNouvellePersonne(supabase, enfant.nouveau, m.source);
     }
     if (!enfantId) continue;
     await appliquerEnfant(supabase, { ...enfant, id: enfantId });
     await supabase
       .from("enfants")
       .insert({ parent_id: id, enfant_id: enfantId, rang: index + 1 });
+
+    let autreParentId = enfant.autre_parent_id;
+    if (!autreParentId && enfant.autre_parent_nouveau?.nom?.trim()) {
+      autreParentId = await creerNouvellePersonne(
+        supabase,
+        enfant.autre_parent_nouveau,
+        m.source
+      );
+    }
+    await supabase
+      .from("enfants")
+      .delete()
+      .eq("enfant_id", enfantId)
+      .neq("parent_id", id);
+    if (autreParentId) {
+      await supabase
+        .from("enfants")
+        .insert({ parent_id: autreParentId, enfant_id: enfantId, rang: index + 1 });
+    }
   }
 
   return { id };
@@ -273,7 +307,7 @@ export async function mettrePhoto(
     .single();
   const role = prof?.role;
   if (role !== "editeur" && role !== "admin") {
-    return { erreur: "Réservé Ã  un éditeur (CHO ou administrateur)." };
+    return { erreur: "Réservé à un éditeur (CHO ou administrateur)." };
   }
 
   const { error } = await supabase
@@ -281,7 +315,7 @@ export async function mettrePhoto(
     .update({ photo_url: photoUrl })
     .eq("id", id);
   if (error) {
-    return { erreur: `Mise Ã  jour impossible : ${error.message}` };
+    return { erreur: `Mise à jour impossible : ${error.message}` };
   }
   return { id };
 }
@@ -303,7 +337,7 @@ export async function supprimer(
     .single();
   const role = prof?.role;
   if (role !== "editeur" && role !== "admin") {
-    return { erreur: "Réservé Ã  un éditeur (CHO ou administrateur)." };
+    return { erreur: "Réservé à un éditeur (CHO ou administrateur)." };
   }
 
   const { error } = await supabase.from("personnes").delete().eq("id", id);

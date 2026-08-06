@@ -38,7 +38,7 @@ export type PersonneEdition = {
   est_ancetre: boolean | null;
   pere: ResultatPersonne | null;
   mere: ResultatPersonne | null;
-  conjoint: ResultatPersonne | null;
+  conjoints: ResultatPersonne[];
   enfants: ResultatPersonne[];
 };
 
@@ -84,6 +84,15 @@ type EnfantLigne = {
   naissance: string;
   decede: boolean;
   deces: string;
+  autreParent: ResultatPersonne | null;
+  autreMode: ModeLien;
+  autreNouvelle: PersonneNouvelle | null;
+};
+type ConjointLigne = {
+  personne: ResultatPersonne | null;
+  mode: ModeLien;
+  nouvelle: PersonneNouvelle | null;
+  detail: DetailLien;
 };
 
 const nouvelleVide = (): PersonneNouvelle => ({
@@ -107,6 +116,9 @@ const ligneDe = (p: ResultatPersonne | null): EnfantLigne => ({
   naissance: p?.date_naissance ?? "",
   decede: Boolean(p && p.vivant === false),
   deces: p?.date_deces ?? "",
+  autreParent: null,
+  autreMode: "relier",
+  autreNouvelle: null,
 });
 
 const nouvelleDepuis = (p: ResultatPersonne): PersonneNouvelle => ({
@@ -125,6 +137,23 @@ const ligneNouvelle = (): EnfantLigne => ({
   naissance: "",
   decede: false,
   deces: "",
+  autreParent: null,
+  autreMode: "relier",
+  autreNouvelle: null,
+});
+
+const ligneConjointDe = (p: ResultatPersonne): ConjointLigne => ({
+  personne: p,
+  mode: "relier",
+  nouvelle: null,
+  detail: detailDe(p),
+});
+
+const ligneConjointNouvelle = (): ConjointLigne => ({
+  personne: null,
+  mode: "declarer",
+  nouvelle: nouvelleVide(),
+  detail: { decede: false, dateDeces: "" },
 });
 
 function BoutonMode({
@@ -361,17 +390,14 @@ export default function FormulaireDeclaration({
   const [provisoireParents, setProvisoireParents] = useState(false);
   const [pereId, setPereId] = useState<string | null>(personne?.pere?.id ?? null);
   const [mereId, setMereId] = useState<string | null>(personne?.mere?.id ?? null);
-  const [conjointId, setConjointId] = useState<string | null>(
-    personne?.conjoint?.id ?? null
+  const [conjoints, setConjoints] = useState<ConjointLigne[]>(
+    (personne?.conjoints ?? []).map(ligneConjointDe)
   );
   const [pereDetail, setPereDetail] = useState<DetailLien>(
     detailDe(personne?.pere ?? null)
   );
   const [mereDetail, setMereDetail] = useState<DetailLien>(
     detailDe(personne?.mere ?? null)
-  );
-  const [conjointDetail, setConjointDetail] = useState<DetailLien>(
-    detailDe(personne?.conjoint ?? null)
   );
   const [enfants, setEnfants] = useState<EnfantLigne[]>(
     (personne?.enfants ?? []).map(ligneDe)
@@ -383,14 +409,8 @@ export default function FormulaireDeclaration({
   const [mereMode, setMereMode] = useState<ModeLien>(
     personne?.mere ? "relier" : "declarer"
   );
-  const [conjointMode, setConjointMode] = useState<ModeLien>(
-    personne?.conjoint ? "relier" : "declarer"
-  );
   const [nouveauPere, setNouveauPere] = useState<PersonneNouvelle>(nouvelleVide());
   const [nouvelleMere, setNouvelleMere] = useState<PersonneNouvelle>(nouvelleVide());
-  const [nouveauConjoint, setNouveauConjoint] = useState<PersonneNouvelle>(
-    nouvelleVide()
-  );
 
   const ajouterEnfant = () => setEnfants((liste) => [...liste, ligneNouvelle()]);
 
@@ -406,6 +426,17 @@ export default function FormulaireDeclaration({
   const majEnfant = (index: number, patch: Partial<EnfantLigne>) =>
     setEnfants((liste) =>
       liste.map((l, i) => (i === index ? { ...l, ...patch } : l))
+    );
+
+  const ajouterConjoint = () =>
+    setConjoints((liste) => [...liste, ligneConjointNouvelle()]);
+
+  const retirerConjoint = (index: number) =>
+    setConjoints((liste) => liste.filter((_, i) => i !== index));
+
+  const majConjoint = (index: number, patch: Partial<ConjointLigne>) =>
+    setConjoints((liste) =>
+      liste.map((c, i) => (i === index ? { ...c, ...patch } : c))
     );
 
   const sourceFinale = sourceDetail.trim()
@@ -485,10 +516,19 @@ export default function FormulaireDeclaration({
         fiabilite,
         pere_id: pereMode === "relier" ? pereId : null,
         mere_id: mereMode === "relier" ? mereId : null,
-        conjoint_id: conjointMode === "relier" ? conjointId : null,
+        conjoints: conjoints
+          .filter(
+            (c) =>
+              (c.mode === "relier" && c.personne) ||
+              (c.mode === "declarer" && c.nouvelle?.nom?.trim())
+          )
+          .map((c) => ({
+            id: c.mode === "relier" ? c.personne?.id ?? null : null,
+            nouveau: c.mode === "declarer" ? c.nouvelle : null,
+            detail: c.mode === "relier" ? (c.personne ? c.detail : null) : null,
+          })),
         pere_nouveau: pereMode === "declarer" ? nouveauPere : null,
         mere_nouveau: mereMode === "declarer" ? nouvelleMere : null,
-        conjoint_nouveau: conjointMode === "declarer" ? nouveauConjoint : null,
         photo_url: photoUrl || null,
         nouveau_quartier: modeNouveauQuartier ? nouveauQuartier : "",
         nouvelle_famille: modeNouvelleFamille ? nouvelleFamille : "",
@@ -498,13 +538,16 @@ export default function FormulaireDeclaration({
         est_ancetre: estAncetre,
         pere: pereId ? pereDetail : null,
         mere: mereId ? mereDetail : null,
-        conjoint: conjointId ? conjointDetail : null,
         enfants: enfants.map((l) => ({
           id: l.mode === "relier" ? l.personne?.id ?? null : null,
           nouveau: l.mode === "declarer" ? l.nouvelle : null,
           date_naissance: l.naissance,
           decede: l.decede,
           date_deces: l.deces,
+          autre_parent_id:
+            l.autreMode === "relier" ? l.autreParent?.id ?? null : null,
+          autre_parent_nouveau:
+            l.autreMode === "declarer" ? l.autreNouvelle : null,
         })),
       };
       const res = edition && personne
@@ -564,18 +607,15 @@ export default function FormulaireDeclaration({
     setProvisoireParents(false);
     setPereId(personne?.pere?.id ?? null);
     setMereId(personne?.mere?.id ?? null);
-    setConjointId(personne?.conjoint?.id ?? null);
+    setConjoints((personne?.conjoints ?? []).map(ligneConjointDe));
     setPereDetail(detailDe(personne?.pere ?? null));
     setMereDetail(detailDe(personne?.mere ?? null));
-    setConjointDetail(detailDe(personne?.conjoint ?? null));
     setEnfants((personne?.enfants ?? []).map(ligneDe));
     setCleForm((n) => n + 1);
     setPereMode(personne?.pere ? "relier" : "declarer");
     setMereMode(personne?.mere ? "relier" : "declarer");
-    setConjointMode(personne?.conjoint ? "relier" : "declarer");
     setNouveauPere(nouvelleVide());
     setNouvelleMere(nouvelleVide());
-    setNouveauConjoint(nouvelleVide());
   };
 
   const champ = (label: string, value: string, set: (v: string) => void) => (
@@ -748,47 +788,86 @@ export default function FormulaireDeclaration({
         <div className="mt-5 border-t border-amber-700/30 pt-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <span className="text-sm font-bold uppercase tracking-wide text-amber-800">
-              Conjoint(e)
+              Conjoint(e)s
             </span>
-            <div className="flex gap-1.5">
-              <BoutonMode
-                actif={conjointMode === "relier"}
-                onClick={() => setConjointMode("relier")}
-              >
-                Relier une personne
-              </BoutonMode>
-              <BoutonMode
-                actif={conjointMode === "declarer"}
-                onClick={() => setConjointMode("declarer")}
-              >
-                Déclarer ici
-              </BoutonMode>
-            </div>
+            <button
+              type="button"
+              onClick={ajouterConjoint}
+              className="inline-flex items-center gap-1 rounded-lg border border-amber-700/40 px-2.5 py-1 text-xs font-semibold text-amber-800 transition hover:bg-amber-700/10"
+            >
+              <Plus className="h-3.5 w-3.5" aria-hidden /> Ajouter un(e) conjoint(e)
+            </button>
           </div>
           <p className="mt-1 text-xs opacity-60">
-            Le conjoint(e) est une personne à part entière : il/elle sera
-            créé(e) et relié(e), et apparaîtra à côté de cette personne dans
-            l&apos;arbre.
+            Un conjoint est une personne à part entière, créée et reliée. Il peut
+            y en avoir plusieurs : le <strong>1ᵉʳ déclaré est le conjoint
+            principal</strong> (affiché en couple dans l&apos;arbre), les autres
+            apparaissent en blocs secondaires avec leurs propres enfants.
           </p>
-          <div className="mt-3">
-            {conjointMode === "relier" ? (
-              <GroupeLien
-                key={`conjoint-${cleForm}`}
-                label="Rechercher le/la conjoint(e)…"
-                valeurInitiale={personne?.conjoint ?? null}
-                detail={conjointDetail}
-                onChangePersonne={(p) => {
-                  setConjointId(p ? p.id : null);
-                  setConjointDetail(detailDe(p));
-                }}
-                onChangeDetail={setConjointDetail}
-              />
+          <div className="mt-3 grid gap-3 lg:grid-cols-2">
+            {conjoints.length === 0 ? (
+              <p className="text-xs opacity-60">
+                Aucun(e) conjoint(e) déclaré(e) pour l&apos;instant.
+              </p>
             ) : (
-              <ChampNouveau
-                etat={nouveauConjoint}
-                setEtat={setNouveauConjoint}
-                placeholderNom="Nom du/de la conjoint(e)"
-              />
+              conjoints.map((c, index) => (
+                <div
+                  key={index}
+                  className="relative rounded-xl border border-amber-600/30 bg-amber-100/50 p-3"
+                >
+                  <div className="mb-1 flex items-center justify-between gap-2">
+                    <span className="text-xs font-semibold uppercase tracking-wide opacity-70">
+                      Conjoint(e) n° {conjoints.length === 1 ? "1 (principal)" : index + 1}
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                      {index === 0 && conjoints.length > 1 && (
+                        <span className="rounded-full bg-amber-700/15 px-2 py-0.5 text-[10px] font-bold text-amber-800">
+                          Principal
+                        </span>
+                      )}
+                      <BoutonMode
+                        actif={c.mode === "relier"}
+                        onClick={() => majConjoint(index, { mode: "relier" })}
+                      >
+                        Chercher
+                      </BoutonMode>
+                      <BoutonMode
+                        actif={c.mode === "declarer"}
+                        onClick={() => majConjoint(index, { mode: "declarer" })}
+                      >
+                        Déclarer ici
+                      </BoutonMode>
+                    </div>
+                  </div>
+                  {c.mode === "relier" ? (
+                    <GroupeLien
+                      key={`conjoint-${index}-${cleForm}`}
+                      label="Rechercher le/la conjoint(e)…"
+                      valeurInitiale={c.personne}
+                      detail={c.detail}
+                      onChangePersonne={(p) =>
+                        majConjoint(index, { personne: p, detail: detailDe(p) })
+                      }
+                      onChangeDetail={(d) => majConjoint(index, { detail: d })}
+                    />
+                  ) : (
+                    <ChampNouveau
+                      etat={c.nouvelle ?? nouvelleVide()}
+                      setEtat={(n) => majConjoint(index, { nouvelle: n })}
+                      placeholderNom="Nom du/de la conjoint(e)"
+                    />
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => retirerConjoint(index)}
+                    className="absolute -right-2 -top-2 rounded-full bg-rose-600 p-1 text-white shadow transition hover:bg-rose-700"
+                    aria-label={`Retirer le/la conjoint(e) n° ${index + 1}`}
+                    title="Retirer"
+                  >
+                    <X className="h-3.5 w-3.5" aria-hidden />
+                  </button>
+                </div>
+              ))
             )}
           </div>
         </div>
@@ -1057,6 +1136,62 @@ export default function FormulaireDeclaration({
                       )}
                     </div>
                   )}
+                  <div className="mt-3 border-t border-amber-700/20 pt-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="text-xs font-semibold uppercase tracking-wide opacity-70">
+                        {sexe === "M"
+                          ? "Mère de cet enfant"
+                          : sexe === "F"
+                            ? "Père de cet enfant"
+                            : "Autre parent de cet enfant"}
+                      </span>
+                      <div className="flex gap-1.5">
+                        <BoutonMode
+                          actif={enfant.autreMode === "relier"}
+                          onClick={() =>
+                            majEnfant(index, { autreMode: "relier" })
+                          }
+                        >
+                          Chercher
+                        </BoutonMode>
+                        <BoutonMode
+                          actif={enfant.autreMode === "declarer"}
+                          onClick={() =>
+                            majEnfant(index, {
+                              autreMode: "declarer",
+                              autreNouvelle: enfant.autreParent
+                                ? nouvelleDepuis(enfant.autreParent)
+                                : enfant.autreNouvelle ?? nouvelleVide(),
+                            })
+                          }
+                        >
+                          Déclarer ici
+                        </BoutonMode>
+                      </div>
+                    </div>
+                    <p className="mt-1 text-xs opacity-60">
+                      Cet enfant est aussi relié(e) à ce parent (obligatoire pour
+                      savoir de qui il/elle est l&apos;enfant).
+                    </p>
+                    {enfant.autreMode === "relier" ? (
+                      <div className="mt-1">
+                        <RecherchePersonne
+                          key={`autre-${index}-${cleForm}`}
+                          label=""
+                          valeurInitiale={enfant.autreParent ?? null}
+                          onChange={(p) => majEnfant(index, { autreParent: p })}
+                        />
+                      </div>
+                    ) : (
+                      <div className="mt-1">
+                        <ChampNouveau
+                          etat={enfant.autreNouvelle ?? nouvelleVide()}
+                          setEtat={(n) => majEnfant(index, { autreNouvelle: n })}
+                          placeholderNom={`Nom ${sexe === "F" ? "du père" : "de la mère"}`}
+                        />
+                      </div>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>

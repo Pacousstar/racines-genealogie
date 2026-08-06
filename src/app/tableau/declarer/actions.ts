@@ -4,6 +4,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { obtenirOuCreerQuartier, obtenirOuCreerFamille } from "@/lib/nomenclature";
 import type {
+  ConjointDeclaration,
   DetailLienDeclaration,
   EnfantDeclaration,
   PersonneNouvelle,
@@ -24,10 +25,9 @@ export type Declaration = {
   fiabilite: string;
   pere_id: string | null;
   mere_id: string | null;
-  conjoint_id: string | null;
+  conjoints: ConjointDeclaration[];
   pere_nouveau: PersonneNouvelle | null;
   mere_nouveau: PersonneNouvelle | null;
-  conjoint_nouveau: PersonneNouvelle | null;
   nouveau_quartier: string;
   nouvelle_famille: string;
   retraite: boolean;
@@ -36,7 +36,6 @@ export type Declaration = {
   est_ancetre: boolean;
   pere: DetailLienDeclaration;
   mere: DetailLienDeclaration;
-  conjoint: DetailLienDeclaration;
   enfants: EnfantDeclaration[];
   provisoireParents: boolean;
 };
@@ -101,6 +100,22 @@ async function creerPersonne(
 // Repli si les nouvelles colonnes (retraite, residence, crise_2010_2011)
 // n'ont pas encore été ajoutées dans Supabase — la déclaration reste possible.
 const COLONNE_MANQUANTE = /column .* does not exist|could not find the column/i;
+
+async function insererUnion(
+  supabase: SupabaseClient,
+  conjointA: string,
+  conjointB: string,
+  rang: number
+): Promise<void> {
+  const essai = await supabase
+    .from("unions")
+    .insert({ conjoint_1: conjointA, conjoint_2: conjointB, type: "mariage", rang });
+  if (essai.error && COLONNE_MANQUANTE.test(essai.error.message)) {
+    await supabase
+      .from("unions")
+      .insert({ conjoint_1: conjointA, conjoint_2: conjointB, type: "mariage" });
+  }
+}
 
 async function insererPersonne(
   supabase: SupabaseClient,
@@ -238,32 +253,27 @@ export async function declarer(
     }
   }
 
-  const conjointId =
-    d.conjoint_id ??
-    (d.conjoint_nouveau?.nom?.trim()
-      ? await creerPersonne(supabase, d.conjoint_nouveau, d.source)
-      : null);
-
-  if (conjointId) {
-    await supabase
-      .from("unions")
-      .insert({
-        conjoint_1: id,
-        conjoint_2: conjointId,
-        type: "mariage",
-      });
-    if (!d.conjoint_id) {
-      if (d.conjoint_nouveau?.decede) {
+  // Conjoint(e)s : plusieurs représentants possibles. Le premier déclaré
+  // (rang 0) devient le conjoint principal dans l'arbre.
+  for (const [i, conjoint] of (d.conjoints ?? []).entries()) {
+    let conjointId = conjoint.id;
+    if (!conjointId && conjoint.nouveau?.nom?.trim()) {
+      conjointId = await creerPersonne(supabase, conjoint.nouveau, d.source);
+    }
+    if (!conjointId) continue;
+    await insererUnion(supabase, id, conjointId, i);
+    if (!conjoint.id) {
+      if (conjoint.nouveau?.decede) {
         await supabase
           .from("personnes")
           .update({
             vivant: false,
-            date_deces: d.conjoint_nouveau.date_deces.trim() || null,
+            date_deces: conjoint.nouveau.date_deces.trim() || null,
           })
           .eq("id", conjointId);
       }
     } else {
-      await appliquerDetailLien(supabase, conjointId, d.conjoint);
+      await appliquerDetailLien(supabase, conjointId, conjoint.detail);
     }
   }
 
@@ -278,6 +288,22 @@ export async function declarer(
     await supabase
       .from("enfants")
       .insert({ parent_id: id, enfant_id: enfantId, rang: index + 1 });
+
+    // L'autre parent de l'enfant (l'autre de la personne déclarée) : c'est
+    // lui/elle qui permet de distinguer « les enfants de X et de Y ».
+    let autreParentId = enfant.autre_parent_id;
+    if (!autreParentId && enfant.autre_parent_nouveau?.nom?.trim()) {
+      autreParentId = await creerPersonne(
+        supabase,
+        enfant.autre_parent_nouveau,
+        d.source
+      );
+    }
+    if (autreParentId) {
+      await supabase
+        .from("enfants")
+        .insert({ parent_id: autreParentId, enfant_id: enfantId, rang: index + 1 });
+    }
   }
 
   return { id };

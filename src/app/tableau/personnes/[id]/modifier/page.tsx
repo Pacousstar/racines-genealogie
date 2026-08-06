@@ -90,28 +90,43 @@ export default async function ModifierPersonnePage({
 
   if (!personne) notFound();
 
-  const [parentsRes, enfantsRes, unionsRes, quartiersRes, famillesRes] = await Promise.all([
+  const [parentsRes, enfantsRes, quartiersRes, famillesRes] = await Promise.all([
     supabase.from("enfants").select("parent_id").eq("enfant_id", id),
     supabase.from("enfants").select("enfant_id").eq("parent_id", id),
-    supabase
-      .from("unions")
-      .select("conjoint_1,conjoint_2")
-      .or(`conjoint_1.eq.${id},conjoint_2.eq.${id}`),
     supabase.from("quartiers").select("id,nom").order("ordre"),
     supabase.from("familles").select("id,nom,quartier_id").order("nom"),
   ]);
 
+  // Toutes les unions de cette personne, triées par rang : le premier
+  // conjoint (rang le plus petit) est le « conjoint principal ».
+  const unionsRes = await (async () => {
+    const essai = await supabase
+      .from("unions")
+      .select("conjoint_1,conjoint_2,rang")
+      .order("rang", { ascending: true, nullsFirst: false })
+      .or(`conjoint_1.eq.${id},conjoint_2.eq.${id}`);
+    if (!essai.error) return essai;
+    if (/column .* does not exist|could not find/i.test(essai.error.message)) {
+      return supabase
+        .from("unions")
+        .select("conjoint_1,conjoint_2")
+        .or(`conjoint_1.eq.${id},conjoint_2.eq.${id}`);
+    }
+    return essai;
+  })();
+
   const parentsIds = (parentsRes.data ?? []).map((r) => r.parent_id);
   const enfantsIds = (enfantsRes.data ?? []).map((r) => r.enfant_id);
-  const union = (unionsRes.data ?? [])[0];
-  const conjointId = union
-    ? union.conjoint_1 === id
-      ? union.conjoint_2
-      : union.conjoint_1
-    : null;
+  const conjointsIds = [
+    ...new Set(
+      (unionsRes.data ?? []).map((u) =>
+        u.conjoint_1 === id ? u.conjoint_2 : u.conjoint_1
+      )
+    ),
+  ];
 
   const lieIds = [
-    ...new Set([...parentsIds, ...enfantsIds, ...(conjointId ? [conjointId] : [])]),
+    ...new Set([...parentsIds, ...enfantsIds, ...conjointsIds]),
   ];
 
   const { data: lies } = lieIds.length
@@ -153,7 +168,9 @@ export default async function ModifierPersonnePage({
     est_ancetre: personne.est_ancetre ?? false,
     pere: pere ? parId.get(pere) ?? null : null,
     mere: mere ? parId.get(mere) ?? null : null,
-    conjoint: conjointId ? parId.get(conjointId) ?? null : null,
+    conjoints: conjointsIds
+      .map((cid) => parId.get(cid))
+      .filter((p): p is ResultatPersonne => Boolean(p)),
     enfants: enfantsIds
       .map((eid) => parId.get(eid))
       .filter((p): p is ResultatPersonne => Boolean(p)),

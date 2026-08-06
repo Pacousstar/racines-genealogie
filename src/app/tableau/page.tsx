@@ -48,7 +48,17 @@ export default async function TableauPage() {
         .select(CHAMPS_PERSONNE.join(","))
         .order("nom"),
       supabase.from("enfants").select("parent_id,enfant_id,rang"),
-      supabase.from("unions").select("conjoint_1,conjoint_2,date_union"),
+      (async () => {
+        const essai = await supabase
+          .from("unions")
+          .select("conjoint_1,conjoint_2,date_union,rang")
+          .order("rang", { ascending: true, nullsFirst: false });
+        if (!essai.error) return essai;
+        if (/column .* does not exist|could not find/i.test(essai.error.message)) {
+          return supabase.from("unions").select("conjoint_1,conjoint_2,date_union");
+        }
+        return essai;
+      })(),
       supabase.from("quartiers").select("id,nom").order("ordre"),
       supabase.from("familles").select("id,nom,quartier_id").order("nom"),
     ]);
