@@ -47,8 +47,8 @@ export default async function CartePage() {
           <Map className="h-6 w-6 text-amber-700" aria-hidden /> Carte du
           village
         </h1>
-        <span className="rounded-full border border-amber-700/40 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800">
-          Plan provisoire — positions à ajuster avec le plan de Toa-Zéo
+        <span className="rounded-full border border-emerald-700/40 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800">
+          Disposition réelle des quartiers de Toa-Zéo
         </span>
         <Link
           href="/tableau/quartiers"
@@ -61,7 +61,7 @@ export default async function CartePage() {
       </div>
       <p className="-mt-2 text-sm opacity-70">
         Chaque quartier est représenté avec ses familles et le nombre de
-        personnes enregistrées. Les positions actuelles sont provisoires.
+        personnes enregistrées.
       </p>
 
       {quartiers.length > 0 && (
