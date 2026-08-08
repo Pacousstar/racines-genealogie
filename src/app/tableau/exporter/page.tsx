@@ -35,7 +35,7 @@ export default async function ExporterPage() {
         </p>
       </div>
 
-      <section className="rounded-2xl border border-current/10 bg-white/70 p-5">
+      <section className="rounded-2xl border border-current/10 bg-white p-5">
         <div className="flex items-start gap-3">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-700/15 text-emerald-800">
             <FileDown className="h-5 w-5" aria-hidden />
@@ -58,7 +58,7 @@ export default async function ExporterPage() {
         </div>
       </section>
 
-      <section className="rounded-2xl border border-current/10 bg-white/70 p-5">
+      <section className="rounded-2xl border border-current/10 bg-white p-5">
         <div className="flex items-start gap-3">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-600/15 text-amber-800">
             <Printer className="h-5 w-5" aria-hidden />

@@ -40,7 +40,7 @@ export default function PersonneCarte({
     <Link
       href={`/tableau/personnes/${p.id}`}
       className={cn(
-        "group relative flex w-40 flex-col gap-1.5 rounded-xl border-2 bg-white/90 p-3 text-center shadow-sm transition hover:-translate-y-0.5 hover:shadow-md",
+        "group relative flex w-40 flex-col gap-1.5 rounded-xl border-2 bg-white p-3 text-center shadow-sm transition hover:-translate-y-0.5 hover:shadow-md",
         mort
           ? "border-neutral-300 opacity-80 grayscale"
           : "border-emerald-700/60 hover:border-emerald-700",

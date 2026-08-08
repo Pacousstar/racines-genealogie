@@ -83,7 +83,7 @@ function LigneCarte({
   couleur: CouleurQuartier | null;
 }) {
   return (
-    <div className="mt-3 flex flex-wrap items-center gap-3 rounded-xl border border-current/10 bg-white/70 p-3">
+    <div className="mt-3 flex flex-wrap items-center gap-3 rounded-xl border border-current/10 bg-white p-3">
       <div
         className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-sm font-bold text-white ${
           p.sexe === "F" ? "bg-rose-700" : "bg-emerald-800"

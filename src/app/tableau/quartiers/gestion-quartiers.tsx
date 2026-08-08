@@ -92,7 +92,7 @@ export default function GestionQuartiers({
             return (
               <li
                 key={q.id}
-                className="flex flex-wrap items-center gap-2 rounded-xl border border-current/10 bg-white/70 p-3"
+                className="flex flex-wrap items-center gap-2 rounded-xl border border-current/10 bg-white p-3"
               >
                 <input
                   type="text"

@@ -62,7 +62,7 @@ function LienPersonne({
   return (
     <Link
       href={`/tableau/personnes/${id}`}
-      className="rounded-lg border border-current/15 bg-white/70 px-3 py-2 text-sm font-medium transition hover:border-emerald-700"
+      className="rounded-lg border border-current/15 bg-white px-3 py-2 text-sm font-medium transition hover:border-emerald-700"
     >
       {nomComplet(personne)} · {periode(personne)} ·{" "}
       {personne.sexe === "M" ? "♂" : "♀"}
@@ -82,7 +82,7 @@ function Bloc({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-xl border border-current/10 bg-white/70 p-4">
+    <section className="rounded-xl border border-current/10 bg-white p-4">
       <h2 className="mb-2 font-semibold">{titre}</h2>
       {nombre > 0 ? (
         <div className="flex flex-wrap gap-2">{children}</div>
@@ -201,7 +201,7 @@ export default async function FichePersonnePage({
         </Link>
       </div>
 
-      <section className="mt-4 rounded-2xl border border-current/10 bg-white/70 p-6">
+      <section className="mt-4 rounded-2xl border border-current/10 bg-white p-6">
         <div className="flex flex-wrap items-start gap-4">
           <div
             className={cn(
@@ -282,7 +282,7 @@ export default async function FichePersonnePage({
       </section>
 
       {p.biographie && (
-        <section className="mt-4 rounded-2xl border border-current/10 bg-white/70 p-6">
+        <section className="mt-4 rounded-2xl border border-current/10 bg-white p-6">
           <h2 className="mb-2 font-semibold">Biographie</h2>
           <p className="whitespace-pre-wrap text-sm leading-relaxed opacity-80">
             {p.biographie}

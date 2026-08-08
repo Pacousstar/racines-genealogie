@@ -403,7 +403,7 @@ export default function GrandTableau({
 
       <div
         ref={conteneurRef}
-        className="min-h-0 flex-1 overflow-auto rounded-xl border-2 border-emerald-200 bg-emerald-50/60 p-4"
+        className="min-h-0 flex-1 overflow-auto rounded-xl border-2 border-emerald-200 bg-white p-4"
       >
         <div style={{ width: dimensions.w * zoom, height: dimensions.h * zoom }}>
           <div

@@ -58,7 +58,7 @@ export default function CarteVillage({ quartiers, familles, personnes }: Props) 
   }, [quartiers, familles, personnes]);
 
   return (
-    <div className="overflow-auto rounded-xl border-2 border-emerald-200 bg-emerald-50/60 p-4">
+    <div className="overflow-auto rounded-xl border-2 border-emerald-200 bg-white p-4">
       <svg
         viewBox={`0 0 ${LARGEUR_PLAN} ${HAUTEUR_PLAN}`}
         className="h-auto w-full min-w-[860px]"

@@ -98,7 +98,7 @@ export default async function ImprimerPage() {
   };
 
   return (
-    <main className="mx-auto max-w-4xl rounded-3xl bg-white/95 p-4 sm:p-6 print:max-w-none print:rounded-none print:bg-white print:p-0">
+    <main className="mx-auto max-w-4xl rounded-3xl bg-white p-4 sm:p-6 print:max-w-none print:rounded-none print:bg-white print:p-0">
       <style>{`
         @media print {
           body { font-size: 9pt; }
