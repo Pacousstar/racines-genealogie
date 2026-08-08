@@ -23,8 +23,8 @@ export default function LoginForm() {
         <div className="mb-6 flex flex-col items-center gap-3 text-center">
           <Logo />
           <div>
-            <h1 className="text-xl font-bold">Généalogie Toa-Zéo</h1>
-            <p className="text-sm opacity-70">
+            <h1 className="text-xl font-bold text-orange-700">Généalogie Toa-Zéo</h1>
+            <p className="text-sm font-medium text-emerald-700">
               {modeReset
                 ? "Réinitialiser le mot de passe"
                 : "L’arbre du village — espace réservé aux membres."}
@@ -42,7 +42,7 @@ export default function LoginForm() {
                 autoComplete="email"
                 required
                 defaultValue=""
-                className="rounded-lg border px-3 py-2 text-base"
+                className="rounded-lg border border-orange-500 px-3 py-2 text-base text-orange-700 placeholder:text-orange-400"
                 placeholder="vous@exemple.fr"
               />
             </label>
@@ -91,7 +91,7 @@ export default function LoginForm() {
                 name="email"
                 autoComplete="email"
                 required
-                className="rounded-lg border px-3 py-2 text-base"
+                className="rounded-lg border border-orange-500 px-3 py-2 text-base text-orange-700 placeholder:text-orange-400"
                 placeholder="vous@exemple.fr"
               />
             </label>
@@ -103,7 +103,7 @@ export default function LoginForm() {
                   name="password"
                   autoComplete="current-password"
                   required
-                  className="w-full rounded-lg border px-3 py-2 pr-10 text-base"
+                  className="w-full rounded-lg border border-orange-500 px-3 py-2 pr-10 text-base text-orange-700 placeholder:text-orange-400"
                   placeholder="••••••••"
                 />
                 <button
