@@ -40,33 +40,37 @@ export default async function DeclarerPage() {
   ]);
 
   return (
-    <main className="mx-auto max-w-3xl p-4 sm:p-6">
-      <div className="flex items-center gap-3">
-        <Logo />
-        <Link
-          href="/tableau"
-          className="inline-flex items-center gap-1.5 text-sm font-medium opacity-80 transition hover:opacity-100"
-        >
-          <ArrowLeft className="h-4 w-4" aria-hidden /> Retour au tableau
-        </Link>
+    <main className="fond-dynamique min-h-dvh p-4 sm:p-6">
+      <div className="mx-auto max-w-3xl">
+        <div className="flex items-center gap-3">
+          <Logo />
+          <Link
+            href="/tableau"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-white/80 transition hover:text-white"
+          >
+            <ArrowLeft className="h-4 w-4" aria-hidden /> Retour au tableau
+          </Link>
+        </div>
+
+        <h1 className="mt-3 mb-1 text-2xl font-bold text-white">
+          + Déclarer une personne
+        </h1>
+        <p className="mb-6 text-sm text-white/85">
+          Remplissez le minimum (nom), le reste au besoin — le CHO complète au fur et à
+          mesure.
+        </p>
+
+        <FormulaireDeclaration
+          options={{
+            quartiers: quartiersRes.data ?? [],
+            familles: (famillesRes.data ?? []) as {
+              id: string;
+              nom: string;
+              quartier_id: string | null;
+            }[],
+          }}
+        />
       </div>
-
-      <h1 className="mt-3 mb-1 text-2xl font-bold">+ Déclarer une personne</h1>
-      <p className="mb-6 text-sm opacity-70">
-        Remplissez le minimum (nom), le reste au besoin — le CHO complète au fur et à
-        mesure.
-      </p>
-
-      <FormulaireDeclaration
-        options={{
-          quartiers: quartiersRes.data ?? [],
-          familles: (famillesRes.data ?? []) as {
-            id: string;
-            nom: string;
-            quartier_id: string | null;
-          }[],
-        }}
-      />
     </main>
   );
 }
