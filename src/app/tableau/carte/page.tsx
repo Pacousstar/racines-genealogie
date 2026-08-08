@@ -36,15 +36,15 @@ export default async function CartePage() {
         <Logo />
         <Link
           href="/tableau"
-          className="inline-flex items-center gap-1.5 text-sm font-medium opacity-80 transition hover:opacity-100"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-white/85 transition hover:text-white"
         >
           <ArrowLeft className="h-4 w-4" aria-hidden /> Retour au Grand Tableau
         </Link>
       </div>
 
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3 text-white">
         <h1 className="flex items-center gap-2 text-2xl font-bold">
-          <Map className="h-6 w-6 text-amber-700" aria-hidden /> Carte du
+          <Map className="h-6 w-6 text-emerald-300" aria-hidden /> Carte du
           village
         </h1>
         <span className="rounded-full border border-emerald-700/40 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800">
@@ -52,20 +52,20 @@ export default async function CartePage() {
         </span>
         <Link
           href="/tableau/quartiers"
-          className="inline-flex items-center gap-1.5 rounded-lg border border-current/20 px-3 py-1 text-xs font-medium transition hover:bg-current/10"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-white/30 px-3 py-1 text-xs font-medium text-white/90 transition hover:bg-white/10"
           title="Modifier les quartiers"
         >
           <MapPinned className="h-3.5 w-3.5" aria-hidden /> Modifier les
           quartiers
         </Link>
       </div>
-      <p className="-mt-2 text-sm opacity-70">
+      <p className="-mt-2 text-sm text-white/85">
         Chaque quartier est représenté avec ses familles et le nombre de
         personnes enregistrées.
       </p>
 
       {quartiers.length > 0 && (
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs opacity-80">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-white/85">
           <span className="font-semibold uppercase tracking-wide opacity-60">
             Quartiers&nbsp;:
           </span>

@@ -40,7 +40,7 @@ export default async function DeclarerPage() {
   ]);
 
   return (
-    <main className="fond-dynamique min-h-dvh p-4 sm:p-6">
+    <main className="min-h-dvh p-4 sm:p-6">
       <div className="mx-auto max-w-3xl">
         <div className="flex items-center gap-3">
           <Logo />

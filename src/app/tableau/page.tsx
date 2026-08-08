@@ -80,13 +80,13 @@ export default async function TableauPage() {
 
   return (
     <div className="flex h-dvh flex-col">
-      <header className="flex flex-wrap items-center gap-4 border-b border-current/10 px-4 py-3 sm:px-6">
+      <header className="flex flex-wrap items-center gap-4 border-b border-white/15 px-4 py-3 text-white sm:px-6">
         <Logo />
         <div className="min-w-0">
           <h1 className="text-lg font-bold leading-tight sm:text-xl">
             Le Grand Tableau
           </h1>
-          <p className="truncate text-xs opacity-70 sm:text-sm">
+          <p className="truncate text-xs text-white/75 sm:text-sm">
             {user?.email} ·{" "}
             <span className="font-medium">{ROLE_LABEL[role] ?? role}</span>
           </p>
@@ -140,7 +140,7 @@ export default async function TableauPage() {
               className="inline-flex items-center gap-1.5 rounded-full border border-current/15 px-3 py-1"
               title={label}
             >
-              <Icon className="h-3.5 w-3.5 text-amber-700" aria-hidden />
+              <Icon className="h-3.5 w-3.5 text-emerald-300" aria-hidden />
               <span className="font-semibold">{value}</span>
               <span className="hidden opacity-70 sm:inline">{label}</span>
             </span>

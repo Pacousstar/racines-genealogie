@@ -36,18 +36,18 @@ export default async function QuartiersPage() {
         <Logo />
         <Link
           href="/tableau"
-          className="inline-flex items-center gap-1.5 text-sm font-medium opacity-80 transition hover:opacity-100"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-white/85 transition hover:text-white"
         >
           <ArrowLeft className="h-4 w-4" aria-hidden /> Retour au Grand Tableau
         </Link>
       </div>
 
-      <div>
+      <div className="text-white">
         <h1 className="flex items-center gap-2 text-2xl font-bold">
-          <MapPinned className="h-6 w-6 text-amber-700" aria-hidden /> Quartiers
+          <MapPinned className="h-6 w-6 text-emerald-300" aria-hidden /> Quartiers
           de Toa-Zéo
         </h1>
-        <p className="-mt-1 text-sm opacity-70">
+        <p className="mt-1 text-sm text-white/85">
           Les quartiers du village — renommer, réordonner, ajouter ou
           supprimer.
         </p>

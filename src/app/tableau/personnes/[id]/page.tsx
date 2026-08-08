@@ -195,7 +195,7 @@ export default async function FichePersonnePage({
         <Logo />
         <Link
           href="/tableau"
-          className="inline-flex items-center gap-1.5 text-sm font-medium opacity-80 transition hover:opacity-100"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-white/85 transition hover:text-white"
         >
           <ArrowLeft className="h-4 w-4" aria-hidden /> Retour au tableau
         </Link>

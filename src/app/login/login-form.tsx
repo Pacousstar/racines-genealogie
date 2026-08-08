@@ -19,7 +19,7 @@ export default function LoginForm() {
 
   return (
     <div className="flex min-h-screen items-center justify-center p-6">
-      <div className="w-full max-w-sm rounded-2xl border border-current/10 bg-current/0 p-8 shadow-lg">
+      <div className="w-full max-w-sm rounded-2xl border-2 border-emerald-600 bg-white p-8 shadow-lg">
         <div className="mb-6 flex flex-col items-center gap-3 text-center">
           <Logo />
           <div>
@@ -69,7 +69,7 @@ export default function LoginForm() {
             <button
               type="submit"
               disabled={resetPending}
-              className="mt-2 rounded-lg bg-amber-700 px-4 py-2.5 font-semibold text-white transition hover:bg-amber-800 disabled:opacity-60"
+              className="mt-2 rounded-lg bg-emerald-600 px-4 py-2.5 font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-60"
             >
               {resetPending ? "Envoi…" : "Envoyer le lien"}
             </button>
@@ -134,7 +134,7 @@ export default function LoginForm() {
             <button
               type="submit"
               disabled={pending}
-              className="mt-2 rounded-lg bg-amber-700 px-4 py-2.5 font-semibold text-white transition hover:bg-amber-800 disabled:opacity-60"
+              className="mt-2 rounded-lg bg-emerald-600 px-4 py-2.5 font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-60"
             >
               {pending ? "Connexion…" : "Se connecter"}
             </button>

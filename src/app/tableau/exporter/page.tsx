@@ -18,18 +18,18 @@ export default async function ExporterPage() {
         <Logo />
         <Link
           href="/tableau"
-          className="inline-flex items-center gap-1.5 text-sm font-medium opacity-80 transition hover:opacity-100"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-white/85 transition hover:text-white"
         >
           <ArrowLeft className="h-4 w-4" aria-hidden /> Retour au Grand Tableau
         </Link>
       </div>
 
-      <div>
+      <div className="text-white">
         <h1 className="flex items-center gap-2 text-2xl font-bold">
-          <FileDown className="h-6 w-6 text-amber-700" aria-hidden /> Exporter
+          <FileDown className="h-6 w-6 text-emerald-300" aria-hidden /> Exporter
           la généalogie
         </h1>
-        <p className="-mt-1 text-sm opacity-70">
+        <p className="mt-1 text-sm text-white/85">
           Sauvegarder ou imprimer le travail du CHO — pour Racines+ et les
           autres logiciels de généalogie.
         </p>
@@ -81,7 +81,7 @@ export default async function ExporterPage() {
         </div>
       </section>
 
-      <p className="flex items-start gap-2 rounded-xl border border-sky-600/30 bg-sky-600/10 p-3 text-xs text-sky-900">
+      <p className="flex items-start gap-2 rounded-xl border border-white/40 bg-white/10 p-3 text-xs text-white/95">
         <Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
         L&apos;export reprend toutes les personnes, unions et liens de la base.
         Après l&apos;import dans Racines+, vérifiez les dates « vers … » qui

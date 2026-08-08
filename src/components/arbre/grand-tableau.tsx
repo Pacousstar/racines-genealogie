@@ -58,48 +58,48 @@ function Noeud({
 
   return (
     <li>
-      {couleur && nomQuartier ? (
+      <div className="flex items-start justify-center gap-2">
+        {couleur && nomQuartier ? (
+          <span
+            className={cn(
+              "mt-2 inline-flex items-center gap-1.5 rounded-xl border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide",
+              CHIPS[couleur]
+            )}
+          >
+            <MapPin className="h-3 w-3" aria-hidden />
+            {nomQuartier}
+          </span>
+        ) : null}
         <div
           className={cn(
-            "mb-2 inline-flex items-center gap-1.5 rounded-xl border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide",
-            CHIPS[couleur]
+            styles.couple,
+            couleur && "rounded-2xl border-2 px-3 pb-3 pt-2",
+            couleur && BORDES[couleur]
           )}
+          style={couleur ? { backgroundColor: TINTE[couleur] } : undefined}
         >
-          <MapPin className="h-3 w-3" aria-hidden />
-          {nomQuartier}
+          <PersonneCarte
+            personne={noeud.personne}
+            quartier={liens.quartierNom(noeud.personne.quartier_id)}
+            famille={liens.familleNom(noeud.personne.famille_id)}
+            surligne={surlignes.has(noeud.personne.id)}
+          />
+          {noeud.conjoint && (
+            <>
+              <div className={styles.union} aria-hidden>
+                <span className={styles.trait} />
+                <span className={styles.symbole}>⚭</span>
+                <span className={styles.trait} />
+              </div>
+              <PersonneCarte
+                personne={noeud.conjoint}
+                quartier={liens.quartierNom(noeud.conjoint.quartier_id)}
+                famille={liens.familleNom(noeud.conjoint.famille_id)}
+                surligne={surlignes.has(noeud.conjoint.id)}
+              />
+            </>
+          )}
         </div>
-      ) : (
-        <div className="mb-2" />
-      )}
-      <div
-        className={cn(
-          styles.couple,
-          couleur && "rounded-2xl border-2 px-3 pb-3 pt-2",
-          couleur && BORDES[couleur]
-        )}
-        style={couleur ? { backgroundColor: TINTE[couleur] } : undefined}
-      >
-        <PersonneCarte
-          personne={noeud.personne}
-          quartier={liens.quartierNom(noeud.personne.quartier_id)}
-          famille={liens.familleNom(noeud.personne.famille_id)}
-          surligne={surlignes.has(noeud.personne.id)}
-        />
-        {noeud.conjoint && (
-          <>
-            <div className={styles.union} aria-hidden>
-              <span className={styles.trait} />
-              <span className={styles.symbole}>⚭</span>
-              <span className={styles.trait} />
-            </div>
-            <PersonneCarte
-              personne={noeud.conjoint}
-              quartier={liens.quartierNom(noeud.conjoint.quartier_id)}
-              famille={liens.familleNom(noeud.conjoint.famille_id)}
-              surligne={surlignes.has(noeud.conjoint.id)}
-            />
-          </>
-        )}
       </div>
       {noeud.autresConjoints.length > 0 && (
         <div className={styles.couplesAutres}>
@@ -271,7 +271,7 @@ export default function GrandTableau({
   };
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-4">
+    <div className="flex min-h-0 flex-1 flex-col gap-4 rounded-2xl border-2 border-emerald-600 bg-white p-4">
       <div className="flex flex-wrap items-center gap-3">
         <label className="relative">
           <Search
@@ -403,7 +403,7 @@ export default function GrandTableau({
 
       <div
         ref={conteneurRef}
-        className="min-h-0 flex-1 overflow-auto rounded-xl border border-current/10 bg-current/[0.03] p-4"
+        className="min-h-0 flex-1 overflow-auto rounded-xl border-2 border-emerald-200 bg-emerald-50/60 p-4"
       >
         <div style={{ width: dimensions.w * zoom, height: dimensions.h * zoom }}>
           <div

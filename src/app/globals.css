@@ -31,14 +31,6 @@ body {
 
 body {
   color: var(--foreground);
-  background: var(--background);
-  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-}
-
-/* Fond animé des pages de saisie : dégradé orange profond avec lumières douces */
-.fond-dynamique {
   background-image:
     radial-gradient(
       60rem 40rem at 15% -10%,
@@ -53,6 +45,9 @@ body {
     linear-gradient(135deg, #f97316 0%, #ea580c 40%, #c2410c 72%, #7c2d12 100%);
   background-size: 130% 130%, 130% 130%, 130% 130%;
   animation: fond-anime 22s ease-in-out infinite alternate;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
 @keyframes fond-anime {
@@ -68,7 +63,16 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  body,
   .fond-dynamique {
+    animation: none;
+  }
+}
+
+@media print {
+  body {
+    background-image: none;
+    background-color: #fff;
     animation: none;
   }
 }
