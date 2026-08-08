@@ -17,6 +17,17 @@
   text-align: center;
 }
 
+/* Racines de la forêt : rien ne doit pendre au-dessus de la première carte.
+   Les traits de filiation ne s'affichent que sous une carte « concernée ». */
+.arbre > li {
+  padding-top: 0;
+}
+
+.arbre > li::before,
+.arbre > li::after {
+  display: none;
+}
+
 .arbre li::before,
 .arbre li::after {
   content: "";
@@ -34,17 +45,6 @@
   border-left: 1px solid var(--arbre-ligne);
 }
 
-.arbre li:only-child::before,
-.arbre li:only-child::after {
-  display: none;
-}
-
-.arbre li:only-child {
-  padding-top: 0;
-  padding-left: 0;
-  padding-right: 0;
-}
-
 .arbre li:first-child::before,
 .arbre li:last-child::after {
   border: 0 none;
@@ -59,12 +59,17 @@
   border-radius: 5px 0 0 0;
 }
 
-/* Segment vertical entre une carte et la barre de ses enfants,
-   à chaque niveau (y compris depuis la racine). */
-.arbre ul::before {
+/* Le trait de filiation part de la carte du parent concerné (pas du milieu
+   du couple) et descend jusqu'à la barre de ses enfants. */
+.attache {
+  position: relative;
+  display: inline-flex;
+}
+
+.attache::after {
   content: "";
   position: absolute;
-  top: 0;
+  top: 100%;
   left: 50%;
   width: 0;
   height: 28px;

@@ -78,12 +78,23 @@ function Noeud({
           )}
           style={couleur ? { backgroundColor: TINTE[couleur] } : undefined}
         >
-          <PersonneCarte
-            personne={noeud.personne}
-            quartier={liens.quartierNom(noeud.personne.quartier_id)}
-            famille={liens.familleNom(noeud.personne.famille_id)}
-            surligne={surlignes.has(noeud.personne.id)}
-          />
+          {noeud.enfants.length > 0 ? (
+            <span className={styles.attache}>
+              <PersonneCarte
+                personne={noeud.personne}
+                quartier={liens.quartierNom(noeud.personne.quartier_id)}
+                famille={liens.familleNom(noeud.personne.famille_id)}
+                surligne={surlignes.has(noeud.personne.id)}
+              />
+            </span>
+          ) : (
+            <PersonneCarte
+              personne={noeud.personne}
+              quartier={liens.quartierNom(noeud.personne.quartier_id)}
+              famille={liens.familleNom(noeud.personne.famille_id)}
+              surligne={surlignes.has(noeud.personne.id)}
+            />
+          )}
           {noeud.conjoint && (
             <>
               <div className={styles.union} aria-hidden>
@@ -117,12 +128,23 @@ function Noeud({
                   )}
                   style={couleur ? { backgroundColor: TINTE[couleur] } : undefined}
                 >
-                  <PersonneCarte
-                    personne={noeud.personne}
-                    quartier={liens.quartierNom(noeud.personne.quartier_id)}
-                    famille={liens.familleNom(noeud.personne.famille_id)}
-                    surligne={surlignes.has(noeud.personne.id)}
-                  />
+                  {autre.enfants.length > 0 ? (
+                    <span className={styles.attache}>
+                      <PersonneCarte
+                        personne={noeud.personne}
+                        quartier={liens.quartierNom(noeud.personne.quartier_id)}
+                        famille={liens.familleNom(noeud.personne.famille_id)}
+                        surligne={surlignes.has(noeud.personne.id)}
+                      />
+                    </span>
+                  ) : (
+                    <PersonneCarte
+                      personne={noeud.personne}
+                      quartier={liens.quartierNom(noeud.personne.quartier_id)}
+                      famille={liens.familleNom(noeud.personne.famille_id)}
+                      surligne={surlignes.has(noeud.personne.id)}
+                    />
+                  )}
                   <div className={styles.union} aria-hidden>
                     <span className={styles.trait} />
                     <span className={styles.symbole}>⚭</span>
