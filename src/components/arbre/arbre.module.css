@@ -8,62 +8,50 @@
 
 .arbre ul {
   position: relative;
-  padding-top: 28px;
+  padding-top: 20px;
+}
+
+/* Barre horizontale au-dessus de chaque fratrie (elle relie la descente du
+   parent aux remontées de ses enfants) */
+.arbre li > ul::before {
+  content: "";
+  position: absolute;
+  top: 20px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--arbre-ligne);
 }
 
 .arbre li {
   position: relative;
-  padding: 28px 6px 0;
+  padding: 20px 6px 0;
   text-align: center;
 }
 
-/* Racines de la forêt : rien ne doit pendre au-dessus de la première carte.
-   Les traits de filiation ne s'affichent que sous une carte « concernée ». */
-.arbre > li {
+/* Racines de la forêt : le ul racine seul est signalé par [data-racines] */
+.arbre[data-racines] > li {
   padding-top: 0;
 }
 
-.arbre > li::before,
-.arbre > li::after {
-  display: none;
-}
-
-.arbre li::before,
-.arbre li::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  right: 50%;
-  width: 50%;
-  height: 28px;
-  border-top: 1px solid var(--arbre-ligne);
-}
-
-.arbre li::after {
-  right: auto;
-  left: 50%;
-  border-left: 1px solid var(--arbre-ligne);
-}
-
-.arbre li:first-child::before,
-.arbre li:last-child::after {
-  border: 0 none;
-}
-
-.arbre li:last-child::before {
-  border-right: 1px solid var(--arbre-ligne);
-  border-radius: 0 5px 0 0;
-}
-
-.arbre li:first-child::after {
-  border-radius: 5px 0 0 0;
-}
-
-/* Le trait de filiation part de la carte du parent concerné (pas du milieu
-   du couple) et descend jusqu'à la barre de ses enfants. */
+/* La carte du parent est le point d'ancrage de la filiation :
+   - ::before remonte de la carte jusqu'à la barre de la fratrie ;
+   - ::after descend de la carte vers la barre de ses enfants. */
 .attache {
   position: relative;
-  display: inline-flex;
+  display: flex;
+  align-items: stretch;
+  align-self: stretch;
+}
+
+.attache::before {
+  content: "";
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  width: 2px;
+  height: 20px;
+  background: var(--arbre-ligne);
 }
 
 .attache::after {
@@ -71,9 +59,30 @@
   position: absolute;
   top: 100%;
   left: 50%;
-  width: 0;
+  width: 2px;
+  height: 20px;
+  background: var(--arbre-ligne);
+  display: none;
+}
+
+/* La descente n'existe que si ce nœud a réellement des enfants */
+.attacheEnfants::after {
+  display: block;
+}
+
+/* Aux racines, rien ne remonte au-dessus de la carte */
+.arbre[data-racines] > li > div > div > span.attache::before {
+  display: none;
+}
+
+/* Couple en boîte (pb-3 = 12 px) : la barre des enfants commence plus bas */
+.arbre li > div > div[data-boite] > span.attacheEnfants::after {
+  height: 32px;
+}
+
+/* Bloc « conjoint secondaire » (pb-2 = 8 px) */
+.arbre li .blocAutre > div > span.attacheEnfants::after {
   height: 28px;
-  border-left: 1px solid var(--arbre-ligne);
 }
 
 /* Bloc couple : deux cartes côte à côte reliées par ⚭ */

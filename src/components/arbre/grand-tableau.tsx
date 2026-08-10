@@ -58,11 +58,11 @@ function Noeud({
 
   return (
     <li>
-      <div className="flex items-start justify-center gap-2">
+      <div className="relative flex justify-center">
         {couleur && nomQuartier ? (
           <span
             className={cn(
-              "mt-2 inline-flex items-center gap-1.5 rounded-xl border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide",
+              "absolute -top-2 left-0 z-10 inline-flex items-center gap-1.5 rounded-xl border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide",
               CHIPS[couleur]
             )}
           >
@@ -76,25 +76,22 @@ function Noeud({
             couleur && "rounded-2xl border-2 px-3 pb-3 pt-2",
             couleur && BORDES[couleur]
           )}
+          data-boite={couleur ? "1" : undefined}
           style={couleur ? { backgroundColor: TINTE[couleur] } : undefined}
         >
-          {noeud.enfants.length > 0 ? (
-            <span className={styles.attache}>
-              <PersonneCarte
-                personne={noeud.personne}
-                quartier={liens.quartierNom(noeud.personne.quartier_id)}
-                famille={liens.familleNom(noeud.personne.famille_id)}
-                surligne={surlignes.has(noeud.personne.id)}
-              />
-            </span>
-          ) : (
+          <span
+            className={cn(
+              styles.attache,
+              noeud.enfants.length > 0 && styles.attacheEnfants
+            )}
+          >
             <PersonneCarte
               personne={noeud.personne}
               quartier={liens.quartierNom(noeud.personne.quartier_id)}
               famille={liens.familleNom(noeud.personne.famille_id)}
               surligne={surlignes.has(noeud.personne.id)}
             />
-          )}
+          </span>
           {noeud.conjoint && (
             <>
               <div className={styles.union} aria-hidden>
@@ -128,23 +125,19 @@ function Noeud({
                   )}
                   style={couleur ? { backgroundColor: TINTE[couleur] } : undefined}
                 >
-                  {autre.enfants.length > 0 ? (
-                    <span className={styles.attache}>
-                      <PersonneCarte
-                        personne={noeud.personne}
-                        quartier={liens.quartierNom(noeud.personne.quartier_id)}
-                        famille={liens.familleNom(noeud.personne.famille_id)}
-                        surligne={surlignes.has(noeud.personne.id)}
-                      />
-                    </span>
-                  ) : (
+                  <span
+                    className={cn(
+                      styles.attache,
+                      autre.enfants.length > 0 && styles.attacheEnfants
+                    )}
+                  >
                     <PersonneCarte
                       personne={noeud.personne}
                       quartier={liens.quartierNom(noeud.personne.quartier_id)}
                       famille={liens.familleNom(noeud.personne.famille_id)}
                       surligne={surlignes.has(noeud.personne.id)}
                     />
-                  )}
+                  </span>
                   <div className={styles.union} aria-hidden>
                     <span className={styles.trait} />
                     <span className={styles.symbole}>⚭</span>
@@ -442,7 +435,7 @@ export default function GrandTableau({
                   Aucune personne ne correspond à ces filtres.
                 </p>
               ) : (
-                <ul className={styles.arbre}>
+                <ul className={styles.arbre} data-racines>
                   {arbreFiltre.map((racine) => (
                     <Noeud
                       key={racine.personne.id}
