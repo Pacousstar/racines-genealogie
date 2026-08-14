@@ -12,8 +12,8 @@
 }
 
 /* Barre horizontale au-dessus de chaque fratrie (elle relie la descente du
-   parent aux remontées de ses enfants) */
-.arbre li > ul::before {
+   parent aux remontées de ses enfants). Tous les ul intérieurs sauf les racines. */
+.arbre ul:not([data-racines])::before {
   content: "";
   position: absolute;
   top: 20px;
@@ -80,8 +80,8 @@
   height: 32px;
 }
 
-/* Bloc « conjoint secondaire » (pb-2 = 8 px) */
-.arbre li .blocAutre > div > span.attacheEnfants::after {
+/* Bloc « conjoint secondaire » avec boîte (pb-2 = 8 px) */
+.arbre li .blocAutre > div[data-boite] > span.attacheEnfants::after {
   height: 28px;
 }
 

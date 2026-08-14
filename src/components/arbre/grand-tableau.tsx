@@ -109,6 +109,19 @@ function Noeud({
           )}
         </div>
       </div>
+      {noeud.enfants.length > 0 && (
+        <ul className={styles.arbre}>
+          {noeud.enfants.map((enfant) => (
+            <Noeud
+              key={enfant.personne.id}
+              noeud={enfant}
+              liens={liens}
+              couleurById={couleurById}
+              surlignes={surlignes}
+            />
+          ))}
+        </ul>
+      )}
       {noeud.autresConjoints.length > 0 && (
         <div className={styles.couplesAutres}>
           <span className={styles.etiquetteAutres}>
@@ -123,6 +136,7 @@ function Noeud({
                     couleur && "rounded-2xl border-2 px-2 pb-2 pt-1",
                     couleur && BORDES[couleur]
                   )}
+                  data-boite={couleur ? "1" : undefined}
                   style={couleur ? { backgroundColor: TINTE[couleur] } : undefined}
                 >
                   <span
@@ -173,19 +187,6 @@ function Noeud({
           Aucun lien descendant déclaré pour cette personne. Reliez ses enfants
           : «&nbsp;Modifier&nbsp;» → « Enfants » → « Ajouter un enfant ».
         </p>
-      )}
-      {noeud.enfants.length > 0 && (
-        <ul className={styles.arbre}>
-          {noeud.enfants.map((enfant) => (
-            <Noeud
-              key={enfant.personne.id}
-              noeud={enfant}
-              liens={liens}
-              couleurById={couleurById}
-              surlignes={surlignes}
-            />
-          ))}
-        </ul>
       )}
     </li>
   );
