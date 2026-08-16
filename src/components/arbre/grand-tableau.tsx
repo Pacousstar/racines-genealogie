@@ -56,6 +56,20 @@ function Noeud({
   const couleur = couleurById(noeud.personne.quartier_id);
   const nomQuartier = liens.quartierNom(noeud.personne.quartier_id);
 
+  const aPlusieursUnions = noeud.autresConjoints.length > 0;
+  const aDesEnfants =
+    noeud.enfants.length > 0 ||
+    noeud.autresConjoints.some((autre) => autre.enfants.length > 0);
+  const groupes = aPlusieursUnions
+    ? [
+        { conjoint: noeud.conjoint, enfants: noeud.enfants },
+        ...noeud.autresConjoints.map((autre) => ({
+          conjoint: autre.conjoint,
+          enfants: autre.enfants,
+        })),
+      ]
+    : [];
+
   return (
     <li>
       <div className="relative flex justify-center">
@@ -82,7 +96,7 @@ function Noeud({
           <span
             className={cn(
               styles.attache,
-              noeud.enfants.length > 0 && styles.attacheEnfants
+              aDesEnfants && styles.attacheEnfants
             )}
           >
             <PersonneCarte
@@ -92,7 +106,7 @@ function Noeud({
               surligne={surlignes.has(noeud.personne.id)}
             />
           </span>
-          {noeud.conjoint && (
+          {!aPlusieursUnions && noeud.conjoint && (
             <>
               <div className={styles.union} aria-hidden>
                 <span className={styles.trait} />
@@ -109,84 +123,66 @@ function Noeud({
           )}
         </div>
       </div>
-      {noeud.enfants.length > 0 && (
+      {aPlusieursUnions ? (
         <ul className={styles.arbre}>
-          {noeud.enfants.map((enfant) => (
-            <Noeud
-              key={enfant.personne.id}
-              noeud={enfant}
-              liens={liens}
-              couleurById={couleurById}
-              surlignes={surlignes}
-            />
-          ))}
-        </ul>
-      )}
-      {noeud.autresConjoints.length > 0 && (
-        <div className={styles.couplesAutres}>
-          <span className={styles.etiquetteAutres}>
-            Conjoint(e)s secondaires — leurs enfants à part
-          </span>
-          <div className={styles.blocsAutres}>
-            {noeud.autresConjoints.map((autre) => (
-              <div key={autre.conjoint.id} className={styles.blocAutre}>
-                <div
-                  className={cn(
-                    styles.couple,
-                    couleur && "rounded-2xl border-2 px-2 pb-2 pt-1",
-                    couleur && BORDES[couleur]
-                  )}
-                  data-boite={couleur ? "1" : undefined}
-                  style={couleur ? { backgroundColor: TINTE[couleur] } : undefined}
-                >
+          {groupes.map((groupe, i) => (
+            <li key={groupe.conjoint ? groupe.conjoint.id : `sans-${i}`}>
+              <div className="relative flex justify-center">
+                {groupe.conjoint && (
                   <span
                     className={cn(
                       styles.attache,
-                      autre.enfants.length > 0 && styles.attacheEnfants
+                      groupe.enfants.length > 0 && styles.attacheEnfants
                     )}
                   >
                     <PersonneCarte
-                      personne={noeud.personne}
-                      quartier={liens.quartierNom(noeud.personne.quartier_id)}
-                      famille={liens.familleNom(noeud.personne.famille_id)}
-                      surligne={surlignes.has(noeud.personne.id)}
+                      personne={groupe.conjoint}
+                      quartier={liens.quartierNom(groupe.conjoint.quartier_id)}
+                      famille={liens.familleNom(groupe.conjoint.famille_id)}
+                      surligne={surlignes.has(groupe.conjoint.id)}
                     />
                   </span>
-                  <div className={styles.union} aria-hidden>
-                    <span className={styles.trait} />
-                    <span className={styles.symbole}>⚭</span>
-                    <span className={styles.trait} />
-                  </div>
-                  <PersonneCarte
-                    personne={autre.conjoint}
-                    quartier={liens.quartierNom(autre.conjoint.quartier_id)}
-                    famille={liens.familleNom(autre.conjoint.famille_id)}
-                    surligne={surlignes.has(autre.conjoint.id)}
-                  />
-                </div>
-                {autre.enfants.length > 0 && (
-                  <ul className={styles.arbre}>
-                    {autre.enfants.map((enfant) => (
-                      <Noeud
-                        key={enfant.personne.id}
-                        noeud={enfant}
-                        liens={liens}
-                        couleurById={couleurById}
-                        surlignes={surlignes}
-                      />
-                    ))}
-                  </ul>
                 )}
               </div>
-            ))}
-          </div>
-        </div>
-      )}
-      {noeud.enfants.length === 0 && !noeud.conjoint && racine && (
-        <p className="mt-3 max-w-56 text-xs opacity-70">
-          Aucun lien descendant déclaré pour cette personne. Reliez ses enfants
-          : «&nbsp;Modifier&nbsp;» → « Enfants » → « Ajouter un enfant ».
-        </p>
+              {groupe.enfants.length > 0 && (
+                <ul className={styles.arbre}>
+                  {groupe.enfants.map((enfant) => (
+                    <Noeud
+                      key={enfant.personne.id}
+                      noeud={enfant}
+                      liens={liens}
+                      couleurById={couleurById}
+                      surlignes={surlignes}
+                    />
+                  ))}
+                </ul>
+              )}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <>
+          {noeud.enfants.length > 0 && (
+            <ul className={styles.arbre}>
+              {noeud.enfants.map((enfant) => (
+                <Noeud
+                  key={enfant.personne.id}
+                  noeud={enfant}
+                  liens={liens}
+                  couleurById={couleurById}
+                  surlignes={surlignes}
+                />
+              ))}
+            </ul>
+          )}
+          {noeud.enfants.length === 0 && !noeud.conjoint && racine && (
+            <p className="mt-3 max-w-56 text-xs opacity-70">
+              Aucun lien descendant déclaré pour cette personne. Reliez ses
+              enfants : «&nbsp;Modifier&nbsp;» → « Enfants » → « Ajouter un
+              enfant ».
+            </p>
+          )}
+        </>
       )}
     </li>
   );
