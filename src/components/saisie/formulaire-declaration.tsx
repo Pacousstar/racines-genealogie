@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { Plus, RotateCcw, Loader2, X, Camera, Star } from "lucide-react";
@@ -11,7 +11,7 @@ import type { PersonneNouvelle } from "@/lib/types-declaration";
 import RecherchePersonne, {
   type ResultatPersonne,
 } from "@/components/saisie/recherche-personne";
-import { initiales } from "@/lib/arbre";
+import { initiales, nomComplet, periode } from "@/lib/arbre";
 
 type Options = {
   quartiers: { id: string; nom: string }[];
@@ -182,13 +182,40 @@ function ChampNouveau({
   etat,
   setEtat,
   placeholderNom = "Nom",
+  onRelierExistant,
 }: {
   etat: PersonneNouvelle;
   setEtat: (n: PersonneNouvelle) => void;
   placeholderNom?: string;
+  onRelierExistant?: (p: ResultatPersonne) => void;
 }) {
   const maj = (patch: Partial<PersonneNouvelle>) =>
     setEtat({ ...etat, ...patch });
+  const [suggestions, setSuggestions] = useState<ResultatPersonne[]>([]);
+  const [rechercheSuggestions, setRechercheSuggestions] = useState(false);
+  const nomSaisi = etat.nom.trim();
+
+  useEffect(() => {
+    if (nomSaisi.length < 2) {
+      setSuggestions([]);
+      return;
+    }
+    const token = setTimeout(async () => {
+      setRechercheSuggestions(true);
+      const supabase = createClient();
+      const si = nomSaisi.replace(/[%_]/g, "");
+      const { data } = await supabase
+        .from("personnes")
+        .select("id,nom,prenom,sexe,date_naissance,date_deces,vivant")
+        .ilike("nom", `%${si}%`)
+        .order("nom")
+        .limit(4);
+      setRechercheSuggestions(false);
+      setSuggestions((data ?? []) as ResultatPersonne[]);
+    }, 350);
+    return () => clearTimeout(token);
+  }, [nomSaisi]);
+
   return (
     <div className="rounded-xl border border-emerald-300 bg-white p-3 shadow-sm">
       <div className="grid gap-3 sm:grid-cols-2">
@@ -212,6 +239,38 @@ function ChampNouveau({
           />
         </label>
       </div>
+      {suggestions.length > 0 && (
+        <div className="mt-2 rounded-lg border border-amber-500/60 bg-amber-50 p-2">
+          <p className="text-xs font-semibold text-amber-800">
+            ⚠ Ce nom existe peut-être déjà — reliez plutôt cette personne :
+          </p>
+          {rechercheSuggestions && (
+            <span className="mt-1 inline-block h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent align-middle" />
+          )}
+          <ul className="mt-1">
+            {suggestions.map((p) => (
+              <li key={p.id}>
+                <button
+                  type="button"
+                  onClick={() => onRelierExistant?.(p)}
+                  className="flex w-full items-center justify-between gap-2 rounded px-2 py-1 text-left text-sm transition hover:bg-amber-100"
+                >
+                  <span className="min-w-0 truncate font-medium text-blue-900">
+                    {nomComplet(p)}{" "}
+                    <span className="opacity-60">
+                      {p.sexe === "M" ? "♂" : p.sexe === "F" ? "♀" : ""}{" "}
+                      {periode(p)}
+                    </span>
+                  </span>
+                  <span className="shrink-0 text-xs font-bold text-emerald-700">
+                    Relier →
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       <div className="mt-3 flex flex-wrap items-center gap-4">
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium">Sexe :</span>
@@ -319,6 +378,9 @@ function GroupeLienOuNouveau({
   setNouveau: (n: PersonneNouvelle) => void;
   cleForm: number;
 }) {
+  const [selection, setSelection] = useState<ResultatPersonne | null>(
+    valeurInitiale
+  );
   return (
     <div className="relative rounded-xl border border-current/10 p-2">
       <div className="mb-1 flex items-center justify-between gap-2">
@@ -336,15 +398,26 @@ function GroupeLienOuNouveau({
       </div>
       {mode === "relier" ? (
         <GroupeLien
-          key={`${label}-${cleForm}`}
+          key={`${label}-${cleForm}-${selection?.id ?? "vide"}`}
           label=""
-          valeurInitiale={valeurInitiale}
+          valeurInitiale={selection}
           detail={detail}
-          onChangePersonne={onChangePersonne}
+          onChangePersonne={(p) => {
+            setSelection(p);
+            onChangePersonne(p);
+          }}
           onChangeDetail={onChangeDetail}
         />
       ) : (
-        <ChampNouveau etat={nouveau} setEtat={setNouveau} />
+        <ChampNouveau
+          etat={nouveau}
+          setEtat={setNouveau}
+          onRelierExistant={(p) => {
+            setSelection(p);
+            setMode("relier");
+            onChangePersonne(p);
+          }}
+        />
       )}
     </div>
   );
@@ -802,7 +875,7 @@ export default function FormulaireDeclaration({
             Un conjoint est une personne à part entière, créée et reliée. Il peut
             y en avoir plusieurs : le <strong>1ᵉʳ déclaré est le conjoint
             principal</strong> (affiché en couple dans l&apos;arbre), les autres
-            apparaissent en blocs secondaires avec leurs propres enfants.
+            apparaissent en colonnes égales à côté, avec leurs propres enfants.
           </p>
           <div className="mt-3 grid gap-3 lg:grid-cols-2">
             {conjoints.length === 0 ? (
@@ -841,7 +914,7 @@ export default function FormulaireDeclaration({
                   </div>
                   {c.mode === "relier" ? (
                     <GroupeLien
-                      key={`conjoint-${index}-${cleForm}`}
+                      key={`conjoint-${index}-${cleForm}-${c.personne?.id ?? "vide"}`}
                       label="Rechercher le/la conjoint(e)…"
                       valeurInitiale={c.personne}
                       detail={c.detail}
@@ -855,6 +928,13 @@ export default function FormulaireDeclaration({
                       etat={c.nouvelle ?? nouvelleVide()}
                       setEtat={(n) => majConjoint(index, { nouvelle: n })}
                       placeholderNom="Nom du/de la conjoint(e)"
+                      onRelierExistant={(p) =>
+                        majConjoint(index, {
+                          mode: "relier",
+                          personne: p,
+                          detail: detailDe(p),
+                        })
+                      }
                     />
                   )}
                   <button
@@ -975,6 +1055,7 @@ export default function FormulaireDeclaration({
         <legend className={styleLegende}>4 · Liens</legend>
         <div className="grid gap-4 sm:grid-cols-2">
           <GroupeLienOuNouveau
+            key={`pere-${cleForm}`}
             label="Père"
             mode={pereMode}
             setMode={setPereMode}
@@ -990,6 +1071,7 @@ export default function FormulaireDeclaration({
             cleForm={cleForm}
           />
           <GroupeLienOuNouveau
+            key={`mere-${cleForm}`}
             label="Mère"
             mode={mereMode}
             setMode={setMereMode}
@@ -1084,7 +1166,7 @@ export default function FormulaireDeclaration({
                       </div>
                       {enfant.mode === "relier" ? (
                         <RecherchePersonne
-                          key={`enfant-${index}-${cleForm}`}
+                          key={`enfant-${index}-${cleForm}-${enfant.personne?.id ?? "vide"}`}
                           label=""
                           valeurInitiale={enfant.personne ?? null}
                           onChange={choisirEnfant(index)}
@@ -1094,6 +1176,7 @@ export default function FormulaireDeclaration({
                           etat={enfant.nouvelle ?? nouvelleVide()}
                           setEtat={(n) => majEnfant(index, { nouvelle: n })}
                           placeholderNom={`Nom de l'enfant`}
+                          onRelierExistant={choisirEnfant(index)}
                         />
                       )}
                     </div>
@@ -1176,7 +1259,7 @@ export default function FormulaireDeclaration({
                     {enfant.autreMode === "relier" ? (
                       <div className="mt-1">
                         <RecherchePersonne
-                          key={`autre-${index}-${cleForm}`}
+                          key={`autre-${index}-${cleForm}-${enfant.autreParent?.id ?? "vide"}`}
                           label=""
                           valeurInitiale={enfant.autreParent ?? null}
                           onChange={(p) => majEnfant(index, { autreParent: p })}
@@ -1188,6 +1271,12 @@ export default function FormulaireDeclaration({
                           etat={enfant.autreNouvelle ?? nouvelleVide()}
                           setEtat={(n) => majEnfant(index, { autreNouvelle: n })}
                           placeholderNom={`Nom ${sexe === "F" ? "du père" : "de la mère"}`}
+                          onRelierExistant={(p) =>
+                            majEnfant(index, {
+                              autreMode: "relier",
+                              autreParent: p,
+                            })
+                          }
                         />
                       </div>
                     )}
