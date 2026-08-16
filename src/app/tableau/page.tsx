@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { LogOut, Users, MapPin, Network, HeartHandshake, FilePenLine, Map, LifeBuoy, Download, MapPinned } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import type { Personne, LienEnfant, Union } from "@/lib/arbre";
-import GrandTableau from "@/components/arbre/grand-tableau";
+import Explorateur from "@/components/arbre/explorateur";
 import Logo from "@/components/branding/logo";
 import { logout } from "./actions";
 
@@ -159,7 +159,7 @@ export default async function TableauPage() {
       </header>
 
       <main className="flex min-h-0 flex-1 flex-col p-4">
-        <GrandTableau
+        <Explorateur
           personnes={personnes}
           liens={liens}
           unions={unions}
