@@ -75,6 +75,13 @@
   display: none;
 }
 
+/* Couple en boîte (pt-2 + bordure = 10 px) : la remontée part du haut de la
+   boîte pour rejoindre la barre de la fratrie */
+.arbre li > div > div[data-boite] > span.attache::before {
+  top: -30px;
+  height: 30px;
+}
+
 /* Couple en boîte (pb-3 = 12 px) : la barre des enfants commence plus bas */
 .arbre li > div > div[data-boite] > span.attacheEnfants::after {
   height: 32px;
