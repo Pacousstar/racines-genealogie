@@ -331,3 +331,64 @@ export function prunerArbre(
     Boolean(noeud.conjoint && match(noeud.conjoint));
   return garde ? { ...noeud, enfants, autresConjoints } : null;
 }
+
+// Tous les descendants d'une personne (via les liens parent -> enfant).
+// N'inclut pas la personne elle-même.
+export function descendantsDe(id: string, liens: LienEnfant[]): Set<string> {
+  const enfantsDe = new Map<string, string[]>();
+  for (const l of liens) {
+    if (!enfantsDe.has(l.parent_id)) enfantsDe.set(l.parent_id, []);
+    enfantsDe.get(l.parent_id)!.push(l.enfant_id);
+  }
+  const sortis = new Set<string>();
+  const file = [id];
+  while (file.length > 0) {
+    const courant = file.pop()!;
+    for (const e of enfantsDe.get(courant) ?? []) {
+      if (sortis.has(e)) continue;
+      sortis.add(e);
+      file.push(e);
+    }
+  }
+  return sortis;
+}
+
+// Tous les ascendants d'une personne (via les liens enfant -> parent).
+// N'inclut pas la personne elle-même.
+export function ascendantsDe(id: string, liens: LienEnfant[]): Set<string> {
+  const parentsDe = new Map<string, string[]>();
+  for (const l of liens) {
+    if (!parentsDe.has(l.enfant_id)) parentsDe.set(l.enfant_id, []);
+    parentsDe.get(l.enfant_id)!.push(l.parent_id);
+  }
+  const sortis = new Set<string>();
+  const file = [id];
+  while (file.length > 0) {
+    const courant = file.pop()!;
+    for (const p of parentsDe.get(courant) ?? []) {
+      if (sortis.has(p)) continue;
+      sortis.add(p);
+      file.push(p);
+    }
+  }
+  return sortis;
+}
+
+// Limite l'affichage à `maxProfondeur` générations depuis la racine :
+// profondeur 0 = la racine, 1 = ses enfants, etc.
+export function clipperGenerations(
+  noeud: ArbreNoeud,
+  maxProfondeur: number
+): ArbreNoeud {
+  if (noeud.profondeur >= maxProfondeur) {
+    return { ...noeud, enfants: [], autresConjoints: [] };
+  }
+  return {
+    ...noeud,
+    enfants: noeud.enfants.map((e) => clipperGenerations(e, maxProfondeur)),
+    autresConjoints: noeud.autresConjoints.map((a) => ({
+      ...a,
+      enfants: a.enfants.map((e) => clipperGenerations(e, maxProfondeur)),
+    })),
+  };
+}

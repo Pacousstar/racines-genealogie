@@ -18,6 +18,7 @@ type Props = {
   quartier?: string | null;
   famille?: string | null;
   surligne?: boolean;
+  afficherPhoto?: boolean;
 };
 
 export default function PersonneCarte({
@@ -27,6 +28,7 @@ export default function PersonneCarte({
   quartier,
   famille,
   surligne,
+  afficherPhoto = true,
 }: Props) {
   const mort = p.vivant === false;
   const ancetre = estAncetre(p);
@@ -67,7 +69,7 @@ export default function PersonneCarte({
         )}
         aria-hidden
       >
-        {p.photo_url ? (
+        {afficherPhoto && p.photo_url ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={photoSrc ?? ""}

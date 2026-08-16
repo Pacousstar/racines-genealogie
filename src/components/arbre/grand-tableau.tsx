@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { Search, ZoomIn, ZoomOut, Maximize, RotateCcw, MapPin } from "lucide-react";
+import { Search, ZoomIn, ZoomOut, Maximize, RotateCcw, MapPin, Camera } from "lucide-react";
 import {
   type Personne,
   type LienEnfant,
@@ -11,8 +11,12 @@ import {
   construitArbre,
   matchPersonne,
   prunerArbre,
+  descendantsDe,
+  ascendantsDe,
+  clipperGenerations,
 } from "@/lib/arbre";
 import PersonneCarte from "./personne-carte";
+import RecherchePersonne from "@/components/saisie/recherche-personne";
 import styles from "./arbre.module.css";
 import { cn } from "@/lib/utils";
 import {
@@ -45,12 +49,14 @@ function Noeud({
   liens,
   couleurById,
   surlignes,
+  afficherPhoto,
   racine = false,
 }: {
   noeud: NonNullable<ReturnType<typeof prunerArbre>>;
   liens: MapQuartierFamille;
   couleurById: (id: string | null) => CouleurQuartier | null;
   surlignes: ReadonlySet<string>;
+  afficherPhoto: boolean;
   racine?: boolean;
 }) {
   const couleur = couleurById(noeud.personne.quartier_id);
@@ -104,6 +110,7 @@ function Noeud({
               quartier={liens.quartierNom(noeud.personne.quartier_id)}
               famille={liens.familleNom(noeud.personne.famille_id)}
               surligne={surlignes.has(noeud.personne.id)}
+              afficherPhoto={afficherPhoto}
             />
           </span>
           {!aPlusieursUnions && noeud.conjoint && (
@@ -118,6 +125,7 @@ function Noeud({
                 quartier={liens.quartierNom(noeud.conjoint.quartier_id)}
                 famille={liens.familleNom(noeud.conjoint.famille_id)}
                 surligne={surlignes.has(noeud.conjoint.id)}
+                afficherPhoto={afficherPhoto}
               />
             </>
           )}
@@ -140,6 +148,7 @@ function Noeud({
                       quartier={liens.quartierNom(groupe.conjoint.quartier_id)}
                       famille={liens.familleNom(groupe.conjoint.famille_id)}
                       surligne={surlignes.has(groupe.conjoint.id)}
+                      afficherPhoto={afficherPhoto}
                     />
                   </span>
                 )}
@@ -153,6 +162,7 @@ function Noeud({
                       liens={liens}
                       couleurById={couleurById}
                       surlignes={surlignes}
+                      afficherPhoto={afficherPhoto}
                     />
                   ))}
                 </ul>
@@ -171,6 +181,7 @@ function Noeud({
                   liens={liens}
                   couleurById={couleurById}
                   surlignes={surlignes}
+                  afficherPhoto={afficherPhoto}
                 />
               ))}
             </ul>
@@ -199,9 +210,23 @@ export default function GrandTableau({
   const [zoom, setZoom] = useState(1);
   const [dimensions, setDimensions] = useState({ w: 0, h: 0 });
   const [ajustementAuto, setAjustementAuto] = useState(true);
+  const [afficherPhotos, setAfficherPhotos] = useState(true);
+  const [generations, setGenerations] = useState("toutes");
+  const [mode, setMode] = useState<"foret" | "descendance" | "ascendance">("foret");
+  const [modeId, setModeId] = useState<string | null>(null);
 
   const conteneurRef = useRef<HTMLDivElement>(null);
   const arbreRef = useRef<HTMLDivElement>(null);
+  const glisseRef = useRef<{
+    x: number;
+    y: number;
+    sx: number;
+    sy: number;
+    deplace: boolean;
+  } | null>(null);
+  const ancreRef = useRef<{ px: number; py: number; cx: number; cy: number } | null>(
+    null
+  );
 
   const arbre = useMemo(
     () => construitArbre(personnes, liens, unions),
@@ -224,11 +249,24 @@ export default function GrandTableau({
   }, [quartiers, familles]);
 
   const arbreFiltre = useMemo(() => {
-    const match = (p: Personne) => matchPersonne(p, filtre);
-    return arbre
+    const modeIds =
+      mode === "descendance" && modeId
+        ? descendantsDe(modeId, liens)
+        : mode === "ascendance" && modeId
+          ? ascendantsDe(modeId, liens)
+          : null;
+    const match = (p: Personne) =>
+      matchPersonne(p, filtre) &&
+      (!modeIds || p.id === modeId || modeIds.has(p.id));
+    const prunes = arbre
       .map((r) => prunerArbre(r, match))
       .filter((n): n is NonNullable<typeof n> => n !== null);
-  }, [arbre, filtre]);
+    if (generations !== "toutes") {
+      const max = Number(generations) - 1;
+      return prunes.map((n) => clipperGenerations(n, max));
+    }
+    return prunes;
+  }, [arbre, filtre, mode, modeId, generations, liens]);
 
   const surlignes = useMemo(() => {
     const ids = new Set<string>();
@@ -272,6 +310,88 @@ export default function GrandTableau({
     return () => window.removeEventListener("resize", ajuster);
   }, [ajustementAuto, ajuster]);
 
+  // Zoom molette (Ctrl+molette), centré sur le curseur. Écouteur natif non
+  // passif : React attache les événements wheel en passif par défaut.
+  useEffect(() => {
+    const c = conteneurRef.current;
+    if (!c) return;
+    const surMolette = (e: WheelEvent) => {
+      if (!e.ctrlKey) return;
+      e.preventDefault();
+      const nouveau = Math.max(
+        ZOOM_MIN,
+        Math.min(ZOOM_MAX, zoom * Math.exp(-e.deltaY * 0.0025))
+      );
+      if (nouveau === zoom) return;
+      const rect = c.getBoundingClientRect();
+      ancreRef.current = {
+        px: (c.scrollLeft + e.clientX - rect.left) / zoom,
+        py: (c.scrollTop + e.clientY - rect.top) / zoom,
+        cx: e.clientX - rect.left,
+        cy: e.clientY - rect.top,
+      };
+      setAjustementAuto(false);
+      setZoom(nouveau);
+    };
+    c.addEventListener("wheel", surMolette, { passive: false });
+    return () => c.removeEventListener("wheel", surMolette);
+  }, [zoom]);
+
+  // Après le zoom molette, replace le point sous le curseur au même endroit.
+  useLayoutEffect(() => {
+    const a = ancreRef.current;
+    const c = conteneurRef.current;
+    if (!a || !c) return;
+    ancreRef.current = null;
+    c.scrollLeft = a.px * zoom - a.cx;
+    c.scrollTop = a.py * zoom - a.cy;
+  }, [zoom]);
+
+  // Déplacement de l'arbre à la souris ou au doigt (drag) : on déplace les
+  // barres de défilement. La capture du pointeur n'est prise qu'après le seuil
+  // de glissement, pour ne pas détourner les clics ordinaires des cartes.
+  const surPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+    const c = conteneurRef.current;
+    if (!c) return;
+    glisseRef.current = {
+      x: e.clientX,
+      y: e.clientY,
+      sx: c.scrollLeft,
+      sy: c.scrollTop,
+      deplace: false,
+    };
+  };
+
+  const surPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const g = glisseRef.current;
+    const c = conteneurRef.current;
+    if (!g || !c) return;
+    const dx = e.clientX - g.x;
+    const dy = e.clientY - g.y;
+    if (!g.deplace && Math.hypot(dx, dy) > 4) {
+      g.deplace = true;
+      c.setPointerCapture(e.pointerId);
+    }
+    if (g.deplace) {
+      c.scrollLeft = g.sx - dx;
+      c.scrollTop = g.sy - dy;
+    }
+  };
+
+  const surPointerUp = () => {
+    const g = glisseRef.current;
+    const c = conteneurRef.current;
+    if (g?.deplace && c) {
+      const stop = (ev: MouseEvent) => {
+        ev.preventDefault();
+        ev.stopPropagation();
+      };
+      c.addEventListener("click", stop, { capture: true, once: true });
+    }
+    glisseRef.current = null;
+  };
+
   const setFiltrePartiel = (partiel: Partial<Filtre>) =>
     setFiltre((f) => ({ ...f, ...partiel }));
 
@@ -303,6 +423,66 @@ export default function GrandTableau({
             </span>
           )}
         </label>
+
+        <select
+          value={mode}
+          onChange={(e) => {
+            setMode(e.target.value as "foret" | "descendance" | "ascendance");
+            setModeId(null);
+          }}
+          className="rounded-lg border px-3 py-2 text-sm"
+          aria-label="Mode d'affichage"
+        >
+          <option value="foret">Forêt complète</option>
+          <option value="descendance">Descendance de…</option>
+          <option value="ascendance">Ascendance de…</option>
+        </select>
+
+        {mode !== "foret" && (
+          <div className="w-56">
+            <RecherchePersonne
+              key={`mode-${mode}-${modeId ?? "vide"}`}
+              label=""
+              placeholder={
+                mode === "descendance"
+                  ? "Descendants de… (chercher)"
+                  : "Ascendants de… (chercher)"
+              }
+              valeurInitiale={
+                modeId ? personnes.find((p) => p.id === modeId) ?? null : null
+              }
+              onChange={(p) => setModeId(p?.id ?? null)}
+            />
+          </div>
+        )}
+
+        <select
+          value={generations}
+          onChange={(e) => setGenerations(e.target.value)}
+          className="rounded-lg border px-3 py-2 text-sm"
+          aria-label="Filtrer par générations"
+        >
+          <option value="toutes">Toutes les générations</option>
+          <option value="2">2 générations</option>
+          <option value="3">3 générations</option>
+          <option value="4">4 générations</option>
+          <option value="5">5 générations</option>
+        </select>
+
+        <button
+          type="button"
+          onClick={() => setAfficherPhotos((v) => !v)}
+          className={cn(
+            "inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition",
+            afficherPhotos
+              ? "border-emerald-700 bg-emerald-700 text-white"
+              : "border-current/20 hover:bg-current/5"
+          )}
+          title="Afficher ou masquer les photos"
+        >
+          <Camera className="h-4 w-4" aria-hidden />
+          Photos {afficherPhotos ? "✓" : "✕"}
+        </button>
 
         <select
           value={filtre.quartier}
@@ -415,7 +595,11 @@ export default function GrandTableau({
 
       <div
         ref={conteneurRef}
-        className="min-h-0 flex-1 overflow-auto rounded-xl border-2 border-emerald-200 bg-white p-4"
+        onPointerDown={surPointerDown}
+        onPointerMove={surPointerMove}
+        onPointerUp={surPointerUp}
+        onPointerCancel={surPointerUp}
+        className="min-h-0 flex-1 cursor-grab touch-none select-none overflow-auto rounded-xl border-2 border-emerald-200 bg-white p-4 active:cursor-grabbing"
       >
         <div style={{ width: dimensions.w * zoom, height: dimensions.h * zoom }}>
           <div
@@ -440,6 +624,7 @@ export default function GrandTableau({
                       liens={labels}
                       couleurById={labels.couleurById}
                       surlignes={surlignes}
+                      afficherPhoto={afficherPhotos}
                       racine
                     />
                   ))}
