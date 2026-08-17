@@ -291,12 +291,15 @@ export default function GrandTableau({
   const ajuster = useCallback(() => {
     const c = conteneurRef.current;
     if (!c || dimensions.w === 0) return;
+    // Sur téléphone, on ne réduit jamais sous 100 % : l'arbre se parcourt
+    // au doigt (drag) plutôt que d'être illisible en miniature.
+    const plancher = window.innerWidth < 768 ? 1 : ZOOM_MIN;
     const s = Math.min(
       1,
       (c.clientWidth - 40) / dimensions.w,
       (c.clientHeight - 40) / dimensions.h
     );
-    setZoom(Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, s)));
+    setZoom(Math.max(plancher, Math.min(ZOOM_MAX, s)));
   }, [dimensions]);
 
   useEffect(() => {
@@ -309,6 +312,23 @@ export default function GrandTableau({
     window.addEventListener("resize", ajuster);
     return () => window.removeEventListener("resize", ajuster);
   }, [ajustementAuto, ajuster]);
+
+  // Sur mobile, à zoom 100 %, l'arbre est plus large que l'écran : on centre
+  // la vue sur la première racine (généralement l'ancêtre ★) au lieu de
+  // laisser l'utilisateur face au bord gauche vide.
+  useEffect(() => {
+    if (window.innerWidth >= 768 || zoom !== 1) return;
+    const c = conteneurRef.current;
+    if (!c) return;
+    const premier = c.querySelector("ul[data-racines] > li");
+    if (!premier) return;
+    const pr = premier.getBoundingClientRect();
+    const cr = c.getBoundingClientRect();
+    c.scrollLeft = Math.max(
+      0,
+      pr.left - cr.left + pr.width / 2 - c.clientWidth / 2
+    );
+  }, [arbreFiltre, zoom, dimensions]);
 
   // Zoom molette (Ctrl+molette), centré sur le curseur. Écouteur natif non
   // passif : React attache les événements wheel en passif par défaut.
@@ -404,8 +424,8 @@ export default function GrandTableau({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-4 rounded-2xl border-2 border-emerald-600 bg-white p-4">
-      <div className="flex flex-wrap items-center gap-3">
-        <label className="relative">
+      <div className="flex flex-wrap items-center gap-3 max-lg:flex-nowrap max-lg:overflow-x-auto">
+        <label className="relative shrink-0">
           <Search
             className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 opacity-60"
             aria-hidden
@@ -415,7 +435,7 @@ export default function GrandTableau({
             value={filtre.chercher}
             onChange={(e) => setFiltrePartiel({ chercher: e.target.value })}
             placeholder="Rechercher un nom…"
-            className="w-56 rounded-lg border px-8 py-2 text-sm"
+            className="w-44 rounded-lg border px-8 py-2 text-sm sm:w-56"
           />
           {surlignes.size > 0 && (
             <span className="pointer-events-none absolute -right-2 -top-2 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-500 px-1.5 text-[10px] font-bold text-white">
@@ -430,7 +450,7 @@ export default function GrandTableau({
             setMode(e.target.value as "foret" | "descendance" | "ascendance");
             setModeId(null);
           }}
-          className="rounded-lg border px-3 py-2 text-sm"
+          className="shrink-0 rounded-lg border px-3 py-2 text-sm"
           aria-label="Mode d'affichage"
         >
           <option value="foret">Forêt complète</option>
@@ -439,7 +459,7 @@ export default function GrandTableau({
         </select>
 
         {mode !== "foret" && (
-          <div className="w-56">
+          <div className="w-56 shrink-0">
             <RecherchePersonne
               key={`mode-${mode}-${modeId ?? "vide"}`}
               label=""
@@ -459,7 +479,7 @@ export default function GrandTableau({
         <select
           value={generations}
           onChange={(e) => setGenerations(e.target.value)}
-          className="rounded-lg border px-3 py-2 text-sm"
+          className="shrink-0 rounded-lg border px-3 py-2 text-sm"
           aria-label="Filtrer par générations"
         >
           <option value="toutes">Toutes les générations</option>
@@ -473,7 +493,7 @@ export default function GrandTableau({
           type="button"
           onClick={() => setAfficherPhotos((v) => !v)}
           className={cn(
-            "inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition",
+            "shrink-0 inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition",
             afficherPhotos
               ? "border-emerald-700 bg-emerald-700 text-white"
               : "border-current/20 hover:bg-current/5"
@@ -487,7 +507,7 @@ export default function GrandTableau({
         <select
           value={filtre.quartier}
           onChange={(e) => setFiltrePartiel({ quartier: e.target.value })}
-          className="rounded-lg border px-3 py-2 text-sm"
+          className="shrink-0 rounded-lg border px-3 py-2 text-sm"
           aria-label="Filtrer par quartier"
         >
           <option value="tous">Tous les quartiers</option>
@@ -501,7 +521,7 @@ export default function GrandTableau({
         <select
           value={filtre.vivant}
           onChange={(e) => setFiltrePartiel({ vivant: e.target.value })}
-          className="rounded-lg border px-3 py-2 text-sm"
+          className="shrink-0 rounded-lg border px-3 py-2 text-sm"
           aria-label="Filtrer par vivants"
         >
           <option value="tous">Vivants et défunts</option>
@@ -512,7 +532,7 @@ export default function GrandTableau({
         <select
           value={filtre.fiabilite}
           onChange={(e) => setFiltrePartiel({ fiabilite: e.target.value })}
-          className="rounded-lg border px-3 py-2 text-sm"
+          className="shrink-0 rounded-lg border px-3 py-2 text-sm"
           aria-label="Filtrer par fiabilité"
         >
           <option value="tous">Toutes fiabilités</option>
@@ -521,7 +541,7 @@ export default function GrandTableau({
           <option value="en cours">En cours</option>
         </select>
 
-        <div className="ml-auto flex items-center gap-1 rounded-lg border p-1">
+        <div className="ml-auto flex shrink-0 items-center gap-1 rounded-lg border p-1">
           <button
             type="button"
             onClick={() => changerZoom(-0.1)}
@@ -568,7 +588,7 @@ export default function GrandTableau({
       </div>
 
       {quartiers.length > 0 && (
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs opacity-80">
+        <div className="hidden flex-wrap items-center gap-x-4 gap-y-1 text-xs opacity-80 md:flex">
           <span className="font-semibold uppercase tracking-wide opacity-60">
             Quartiers&nbsp;:
           </span>
@@ -599,7 +619,7 @@ export default function GrandTableau({
         onPointerMove={surPointerMove}
         onPointerUp={surPointerUp}
         onPointerCancel={surPointerUp}
-        className="min-h-0 flex-1 cursor-grab touch-none select-none overflow-auto rounded-xl border-2 border-emerald-200 bg-white p-4 active:cursor-grabbing"
+        className="min-h-0 flex-1 cursor-grab touch-none select-none overflow-auto rounded-xl border-2 border-emerald-200 bg-white p-2 active:cursor-grabbing sm:p-4"
       >
         <div style={{ width: dimensions.w * zoom, height: dimensions.h * zoom }}>
           <div

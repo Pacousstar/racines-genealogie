@@ -327,11 +327,11 @@ export default function VueFamille({
           Aucune personne pour l&apos;instant. Déclarez la première famille.
         </p>
       ) : (
-        <div className="min-h-0 flex-1 overflow-auto">
-          <div className="flex min-h-full flex-col items-center justify-center py-6">
+        <div className="flex min-h-0 flex-1 items-start overflow-auto">
+          <div className="my-auto flex w-max min-w-full flex-col items-start py-6">
             {parents.length > 0 && (
               <>
-                <div className={styles.couple}>
+                <div className={cn(styles.couple, "mx-auto")}>
                   {parents.map((parent, i) => (
                     <Fragment key={parent.id}>
                       {i > 0 && <UnionSep />}
@@ -340,13 +340,13 @@ export default function VueFamille({
                   ))}
                 </div>
                 <div
-                  className="h-6 w-0.5"
+                  className="mx-auto h-6 w-0.5"
                   style={{ background: "var(--arbre-ligne)" }}
                 />
               </>
             )}
 
-            <div className={styles.couple}>
+            <div className={cn(styles.couple, "mx-auto")}>
               {carte(focus, setFocusId, true)}
               {conjoints.map((c) => (
                 <Fragment key={c.id}>
@@ -359,10 +359,10 @@ export default function VueFamille({
             {enfants.length > 0 && (
               <>
                 <div
-                  className="h-11 w-0.5"
+                  className="mx-auto h-11 w-0.5"
                   style={{ background: "var(--arbre-ligne)" }}
                 />
-                <ul className={styles.arbre}>
+                <ul className={cn(styles.arbre, "mx-auto")}>
                   {enfants.map(({ personne: enfant, autreParent }) => (
                     <li key={enfant.id}>
                       <div className="relative flex justify-center">

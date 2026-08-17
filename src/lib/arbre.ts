@@ -101,6 +101,12 @@ export function estAncetre(p: Personne): boolean {
   return p.est_ancetre === true || p.est_fondateur === true;
 }
 
+// Libellé d'affichage d'une famille : préfixe « Famille » ajouté une seule
+// fois (les anciens enregistrements contiennent déjà « Famille X »).
+export function libelleFamille(nom: string): string {
+  return /^Famille\s+/i.test(nom) ? nom : `Famille ${nom}`;
+}
+
 export function construitArbre(
   personnes: Personne[],
   liens: LienEnfant[],

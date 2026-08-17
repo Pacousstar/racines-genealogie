@@ -8,6 +8,7 @@ import {
   nomComplet,
   periode,
   estAncetre,
+  libelleFamille,
 } from "@/lib/arbre";
 import { cn } from "@/lib/utils";
 
@@ -101,14 +102,14 @@ export default function PersonneCarte({
             </span>
           )}
           {quartier && (
-            <span className="inline-flex items-center gap-0.5 truncate rounded-full bg-current/5 px-1.5 py-0.5 font-medium opacity-75">
+            <span className="inline-flex items-center gap-0.5 truncate rounded-full bg-current/10 px-1.5 py-0.5 font-medium opacity-95">
               <MapPin className="h-3 w-3 shrink-0" aria-hidden />
               {quartier}
             </span>
           )}
           {famille && (
-            <span className="truncate rounded-full bg-current/5 px-1.5 py-0.5 font-medium opacity-75">
-              {/^Famille\s+/i.test(famille) ? famille : `Famille ${famille}`}
+            <span className="truncate rounded-full bg-current/10 px-1.5 py-0.5 font-medium opacity-95">
+              {libelleFamille(famille)}
             </span>
           )}
         </div>

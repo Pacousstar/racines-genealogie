@@ -11,7 +11,7 @@ import type { PersonneNouvelle } from "@/lib/types-declaration";
 import RecherchePersonne, {
   type ResultatPersonne,
 } from "@/components/saisie/recherche-personne";
-import { initiales, nomComplet, periode } from "@/lib/arbre";
+import { initiales, nomComplet, periode, libelleFamille } from "@/lib/arbre";
 
 type Options = {
   quartiers: { id: string; nom: string }[];
@@ -791,7 +791,7 @@ export default function FormulaireDeclaration({
           <option value="">— Aucune famille —</option>
           {famillesFiltrees.map((f) => (
             <option key={f.id} value={f.id}>
-              {f.nom}
+              {libelleFamille(f.nom)}
             </option>
           ))}
           <option value="__nouveau__">＋ Ajouter une famille…</option>

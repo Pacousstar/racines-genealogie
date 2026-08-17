@@ -10,6 +10,7 @@ import {
   nomComplet,
   periode,
   estAncetre,
+  libelleFamille,
   type Personne,
 } from "@/lib/arbre";
 import { cn } from "@/lib/utils";
@@ -185,7 +186,10 @@ export default async function FichePersonnePage({
           : "vivant(e)",
     },
     { label: "Quartier", valeur: quartierRes.data?.nom ?? "—" },
-    { label: "Famille", valeur: familleRes.data?.nom ?? "—" },
+    {
+      label: "Famille",
+      valeur: familleRes.data?.nom ? libelleFamille(familleRes.data.nom) : "—",
+    },
     { label: "Source", valeur: p.source ?? "—" },
   ];
 

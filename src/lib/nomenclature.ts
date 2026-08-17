@@ -26,7 +26,9 @@ export async function obtenirOuCreerFamille(
   nom: string,
   quartierId: string | null
 ): Promise<string | null> {
-  const n = nom.trim();
+  // Le nom est stocké sans le préfixe « Famille » : on le retire pour que
+  // « DIHI » et « Famille DIHI » désignent la même famille.
+  const n = nom.trim().replace(/^Famille\s+/i, "");
   if (!n) return null;
   const { data: existant } = await supabase
     .from("familles")

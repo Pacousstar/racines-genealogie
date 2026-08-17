@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
-import { nomComplet, periode } from "@/lib/arbre";
+import { nomComplet, periode, libelleFamille } from "@/lib/arbre";
 import BoutonImprimer from "./bouton-imprimer";
 import Logo from "@/components/branding/logo";
 
@@ -143,7 +143,7 @@ export default async function ImprimerPage() {
           {famillesGroupe.map((f) => (
             <div key={f.id} className="mb-4 print:mb-3">
               <h3 className="mb-1 text-sm font-semibold text-amber-800">
-                Famille {f.nom}
+                {libelleFamille(f.nom)}
               </h3>
               <TablePersonnes
                 membres={f.membres}
