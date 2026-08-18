@@ -64,7 +64,7 @@ function CarteFamille({
         }
       }}
       className={cn(
-        "group relative flex w-40 cursor-pointer flex-col gap-1.5 rounded-xl border-2 bg-white p-3 text-center shadow-sm transition hover:-translate-y-0.5 hover:shadow-md",
+        "group relative flex w-44 cursor-pointer flex-col gap-1.5 rounded-xl border-2 bg-white p-3 text-center shadow-sm transition hover:-translate-y-0.5 hover:shadow-md",
         mort
           ? "border-neutral-300 opacity-80 grayscale"
           : couleur
@@ -85,14 +85,14 @@ function CarteFamille({
       </Link>
 
       {ancetre && (
-        <span className="absolute -top-2.5 left-1/2 inline-flex -translate-x-1/2 items-center gap-0.5 rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-bold text-white shadow">
-          <Star className="h-3 w-3" aria-hidden /> Ancêtre
+        <span className="absolute -top-3 left-1/2 inline-flex -translate-x-1/2 items-center gap-0.5 rounded-full bg-amber-500 px-2.5 py-1 text-xs font-bold text-white shadow">
+          <Star className="h-3.5 w-3.5" aria-hidden /> Ancêtre
         </span>
       )}
 
       <div
         className={cn(
-          "mx-auto flex h-16 w-16 items-center justify-center rounded-lg text-lg font-bold",
+          "mx-auto flex h-16 w-16 items-center justify-center rounded-lg text-xl font-bold",
           mort
             ? "bg-neutral-300 text-neutral-600"
             : "bg-emerald-800 text-white"
@@ -115,25 +115,25 @@ function CarteFamille({
       </div>
 
       <div>
-        <div className="text-sm font-bold leading-tight">{nomComplet(p)}</div>
+        <div className="text-base font-bold leading-tight">{nomComplet(p)}</div>
         {p.surnom && (
-          <div className="text-xs italic opacity-70">« {p.surnom} »</div>
+          <div className="text-sm italic opacity-80">« {p.surnom} »</div>
         )}
       </div>
 
-      <div className="flex items-center justify-center gap-1 text-xs opacity-80">
+      <div className="flex items-center justify-center gap-1 text-sm opacity-90">
         {p.sexe && <span>{p.sexe === "M" ? "♂" : "♀"}</span>}
         <span>{periode(p)}</span>
       </div>
 
       {quartier && (
-        <span className="mx-auto inline-flex max-w-full items-center gap-0.5 truncate rounded-full bg-current/5 px-1.5 py-0.5 text-[10px] font-medium opacity-75">
+        <span className="mx-auto inline-flex max-w-full items-center gap-0.5 truncate rounded-full bg-current/10 px-2 py-0.5 text-xs font-medium opacity-95">
           {quartier}
         </span>
       )}
 
       {p.fiabilite === "confirmé" && (
-        <span className="mx-auto rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold text-emerald-800">
+        <span className="mx-auto rounded-full bg-emerald-500/15 px-2.5 py-1 text-xs font-semibold text-emerald-800">
           ✓ confirmé
         </span>
       )}

@@ -79,7 +79,7 @@ export default async function TableauPage() {
   ];
 
   return (
-    <div className="flex h-dvh flex-col">
+    <div className="flex min-h-dvh flex-col">
       <header className="flex flex-wrap items-center gap-4 border-b border-white/15 px-4 py-3 text-white sm:px-6">
         <Logo />
         <div className="min-w-0">

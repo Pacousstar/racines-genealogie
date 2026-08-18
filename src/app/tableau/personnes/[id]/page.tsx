@@ -63,7 +63,7 @@ function LienPersonne({
   return (
     <Link
       href={`/tableau/personnes/${id}`}
-      className="rounded-lg border border-current/15 bg-white px-3 py-2 text-sm font-medium transition hover:border-emerald-700"
+      className="rounded-lg border border-current/15 bg-white px-3 py-2 text-base font-medium transition hover:border-emerald-700"
     >
       {nomComplet(personne)} · {periode(personne)} ·{" "}
       {personne.sexe === "M" ? "♂" : "♀"}
@@ -242,23 +242,23 @@ export default async function FichePersonnePage({
             </p>
             <div className="mt-2 flex flex-wrap gap-2">
               {estAncetre(p) && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/20 px-3 py-1 text-xs font-semibold text-amber-800">
-                  <Star className="h-3.5 w-3.5" aria-hidden /> Ancêtre
+                <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/20 px-3 py-1.5 text-sm font-semibold text-amber-800">
+                  <Star className="h-4 w-4" aria-hidden /> Ancêtre
                 </span>
               )}
               {p.est_fondateur === true && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-purple-500/20 px-3 py-1 text-xs font-semibold text-purple-800">
-                  <Crown className="h-3.5 w-3.5" aria-hidden /> Fondateur
+                <span className="inline-flex items-center gap-1 rounded-full bg-purple-500/20 px-3 py-1.5 text-sm font-semibold text-purple-800">
+                  <Crown className="h-4 w-4" aria-hidden /> Fondateur
                 </span>
               )}
               {conjointsIds.length > 0 && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-violet-500/20 px-3 py-1 text-xs font-semibold text-violet-800">
-                  <Heart className="h-3.5 w-3.5" aria-hidden /> uni(e)
+                <span className="inline-flex items-center gap-1 rounded-full bg-violet-500/20 px-3 py-1.5 text-sm font-semibold text-violet-800">
+                  <Heart className="h-4 w-4" aria-hidden /> uni(e)
                 </span>
               )}
               <span
                 className={cn(
-                  "rounded-full px-3 py-1 text-xs font-semibold",
+                  "rounded-full px-3 py-1.5 text-sm font-semibold",
                   p.fiabilite === "confirmé"
                     ? "bg-emerald-500/20 text-emerald-800"
                     : p.fiabilite === "probable"
