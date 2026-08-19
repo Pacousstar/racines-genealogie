@@ -3,6 +3,7 @@ import { LogOut, Users, MapPin, Network, HeartHandshake, FilePenLine, Map, LifeB
 import { createClient } from "@/lib/supabase/server";
 import type { Personne, LienEnfant, Union } from "@/lib/arbre";
 import Explorateur from "@/components/arbre/explorateur";
+import NavigationBas from "@/components/mobile/navigation-bas";
 import Logo from "@/components/branding/logo";
 import { logout } from "./actions";
 
@@ -158,7 +159,7 @@ export default async function TableauPage() {
         </div>
       </header>
 
-      <main className="flex min-h-0 flex-1 flex-col p-4">
+      <main className="flex min-h-0 flex-1 flex-col p-4 pb-20 md:pb-4">
         <Explorateur
           personnes={personnes}
           liens={liens}
@@ -167,6 +168,8 @@ export default async function TableauPage() {
           familles={familles}
         />
       </main>
+
+      <NavigationBas />
     </div>
   );
 }

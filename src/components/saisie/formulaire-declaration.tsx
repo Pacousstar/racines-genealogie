@@ -18,6 +18,20 @@ type Options = {
   familles: { id: string; nom: string; quartier_id: string | null }[];
 };
 
+export type PrecisionsDeclaration = {
+  pere: ResultatPersonne | null;
+  mere: ResultatPersonne | null;
+  conjoint: ResultatPersonne | null;
+  enfant: ResultatPersonne | null;
+};
+
+export const PRECISIONS_VIDES: PrecisionsDeclaration = {
+  pere: null,
+  mere: null,
+  conjoint: null,
+  enfant: null,
+};
+
 export type PersonneEdition = {
   id: string;
   nom: string;
@@ -426,9 +440,11 @@ function GroupeLienOuNouveau({
 export default function FormulaireDeclaration({
   options,
   personne,
+  precisions = PRECISIONS_VIDES,
 }: {
   options: Options;
   personne?: PersonneEdition | null;
+  precisions?: PrecisionsDeclaration;
 }) {
   const router = useRouter();
   const [enregistrement, setEnregistrement] = useState(false);
@@ -461,26 +477,34 @@ export default function FormulaireDeclaration({
   const [sourceDetail, setSourceDetail] = useState("");
   const [fiabilite, setFiabilite] = useState(personne?.fiabilite ?? "confirmé");
   const [provisoireParents, setProvisoireParents] = useState(false);
-  const [pereId, setPereId] = useState<string | null>(personne?.pere?.id ?? null);
-  const [mereId, setMereId] = useState<string | null>(personne?.mere?.id ?? null);
+  const [pereId, setPereId] = useState<string | null>(
+    personne?.pere?.id ?? precisions.pere?.id ?? null
+  );
+  const [mereId, setMereId] = useState<string | null>(
+    personne?.mere?.id ?? precisions.mere?.id ?? null
+  );
   const [conjoints, setConjoints] = useState<ConjointLigne[]>(
-    (personne?.conjoints ?? []).map(ligneConjointDe)
+    (personne?.conjoints ?? []).map(ligneConjointDe).concat(
+      !personne && precisions.conjoint ? [ligneConjointDe(precisions.conjoint)] : []
+    )
   );
   const [pereDetail, setPereDetail] = useState<DetailLien>(
-    detailDe(personne?.pere ?? null)
+    detailDe(personne?.pere ?? precisions.pere ?? null)
   );
   const [mereDetail, setMereDetail] = useState<DetailLien>(
-    detailDe(personne?.mere ?? null)
+    detailDe(personne?.mere ?? precisions.mere ?? null)
   );
   const [enfants, setEnfants] = useState<EnfantLigne[]>(
-    (personne?.enfants ?? []).map(ligneDe)
+    (personne?.enfants ?? []).map(ligneDe).concat(
+      !personne && precisions.enfant ? [ligneDe(precisions.enfant)] : []
+    )
   );
   const [cleForm, setCleForm] = useState(0);
   const [pereMode, setPereMode] = useState<ModeLien>(
-    personne?.pere ? "relier" : "declarer"
+    personne?.pere || precisions.pere ? "relier" : "declarer"
   );
   const [mereMode, setMereMode] = useState<ModeLien>(
-    personne?.mere ? "relier" : "declarer"
+    personne?.mere || precisions.mere ? "relier" : "declarer"
   );
   const [nouveauPere, setNouveauPere] = useState<PersonneNouvelle>(nouvelleVide());
   const [nouvelleMere, setNouvelleMere] = useState<PersonneNouvelle>(nouvelleVide());

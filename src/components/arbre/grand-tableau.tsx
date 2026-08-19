@@ -227,6 +227,21 @@ export default function GrandTableau({
   const ancreRef = useRef<{ px: number; py: number; cx: number; cy: number } | null>(
     null
   );
+  const zoomRef = useRef(zoom);
+  useEffect(() => {
+    zoomRef.current = zoom;
+  }, [zoom]);
+
+  // Pincement à deux doigts : deux pointeurs simultanés sur la zone.
+  const pointRefs = useRef(new Map<number, { x: number; y: number }>());
+  const pinceRef = useRef<{
+    distance: number;
+    zoom0: number;
+    px: number;
+    py: number;
+    cx: number;
+    cy: number;
+  } | null>(null);
 
   const arbre = useMemo(
     () => construitArbre(personnes, liens, unions),
@@ -374,6 +389,27 @@ export default function GrandTableau({
     if (e.pointerType === "mouse" && e.button !== 0) return;
     const c = conteneurRef.current;
     if (!c) return;
+    pointRefs.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+    if (pointRefs.current.size === 2) {
+      // Second doigt : on bascule en mode pincement, on annule tout drag.
+      glisseRef.current = null;
+      const [a, b] = [...pointRefs.current.values()];
+      const mx = (a.x + b.x) / 2;
+      const my = (a.y + b.y) / 2;
+      const rect = c.getBoundingClientRect();
+      pinceRef.current = {
+        distance: Math.hypot(a.x - b.x, a.y - b.y),
+        zoom0: zoomRef.current,
+        px: (c.scrollLeft + mx - rect.left) / zoomRef.current,
+        py: (c.scrollTop + my - rect.top) / zoomRef.current,
+        cx: mx - rect.left,
+        cy: my - rect.top,
+      };
+      return;
+    }
+
+    if (pinceRef.current) return;
     glisseRef.current = {
       x: e.clientX,
       y: e.clientY,
@@ -384,9 +420,37 @@ export default function GrandTableau({
   };
 
   const surPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    const g = glisseRef.current;
     const c = conteneurRef.current;
-    if (!g || !c) return;
+    if (!c) return;
+    const point = pointRefs.current.get(e.pointerId);
+    if (!point) return;
+    point.x = e.clientX;
+    point.y = e.clientY;
+
+    const pince = pinceRef.current;
+    if (pince && pointRefs.current.size >= 2) {
+      const [a, b] = [...pointRefs.current.values()];
+      const distance = Math.hypot(a.x - b.x, a.y - b.y);
+      if (distance < 8) return;
+      const ratio = distance / pince.distance;
+      const nouveau = Math.max(
+        ZOOM_MIN,
+        Math.min(ZOOM_MAX, pince.zoom0 * ratio)
+      );
+      if (nouveau === zoomRef.current) return;
+      ancreRef.current = {
+        px: pince.px,
+        py: pince.py,
+        cx: pince.cx,
+        cy: pince.cy,
+      };
+      setAjustementAuto(false);
+      setZoom(nouveau);
+      return;
+    }
+
+    const g = glisseRef.current;
+    if (!g) return;
     const dx = e.clientX - g.x;
     const dy = e.clientY - g.y;
     if (!g.deplace && Math.hypot(dx, dy) > 4) {
@@ -399,7 +463,9 @@ export default function GrandTableau({
     }
   };
 
-  const surPointerUp = () => {
+  const surPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    pointRefs.current.delete(e.pointerId);
+    if (pointRefs.current.size < 2) pinceRef.current = null;
     const g = glisseRef.current;
     const c = conteneurRef.current;
     if (g?.deplace && c) {

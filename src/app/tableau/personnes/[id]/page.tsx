@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Star, Heart, Crown } from "lucide-react";
+import { ArrowLeft, Star, Heart, Crown, Play, Clock } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import ActionsFiche from "@/components/saisie/actions-fiche";
+import ActionsFlottantes from "@/components/saisie/actions-flottantes";
+import NavigationBas from "@/components/mobile/navigation-bas";
 import Logo from "@/components/branding/logo";
 import {
   initiales,
@@ -124,7 +126,7 @@ export default async function FichePersonnePage({
 
   const p = personne as unknown as PersonneFiche;
 
-  const [quartierRes, familleRes, parentsRes, enfantsRes, unionsRes] =
+  const [quartierRes, familleRes, parentsRes, enfantsRes, unionsRes, temoignagesRes] =
     await Promise.all([
       p.quartier_id
         ? supabase.from("quartiers").select("nom").eq("id", p.quartier_id).single()
@@ -148,10 +150,22 @@ export default async function FichePersonnePage({
         .from("unions")
         .select("conjoint_1,conjoint_2,date_union,type")
         .or(`conjoint_1.eq.${id},conjoint_2.eq.${id}`),
+      supabase
+        .from("temoignages")
+        .select("id,titre,audio_url,duree,cree_le")
+        .eq("personne_id", id)
+        .order("cree_le", { ascending: false }),
     ]);
 
   const parentsIds = [...new Set((parentsRes.data ?? []).map((r) => r.parent_id))];
   const enfantsIds = (enfantsRes.data ?? []).map((r) => r.enfant_id);
+  const temoignages = (temoignagesRes.data ?? []) as {
+    id: string;
+    titre: string | null;
+    audio_url: string;
+    duree: number | null;
+    cree_le: string | null;
+  }[];
   const conjointsIds = (unionsRes.data ?? []).map((u) =>
     u.conjoint_1 === id ? u.conjoint_2 : u.conjoint_1
   );
@@ -167,6 +181,27 @@ export default async function FichePersonnePage({
         .from("personnes")
         .select("id,nom,prenom,sexe,date_naissance,date_deces,vivant")
         .in("id", listeIds)
+    : { data: null as null };
+
+  // Frères et sœurs : ceux qui partagent au moins un parent avec la personne.
+  const freresIds: string[] = [];
+  if (parentsIds.length > 0) {
+    const { data: freresRes } = await supabase
+      .from("enfants")
+      .select("enfant_id")
+      .in("parent_id", parentsIds);
+    for (const f of freresRes ?? []) {
+      if (f.enfant_id !== id && !freresIds.includes(f.enfant_id)) {
+        freresIds.push(f.enfant_id);
+      }
+    }
+  }
+
+  const { data: liesFreres } = freresIds.length
+    ? await supabase
+        .from("personnes")
+        .select("id,nom,prenom,sexe,date_naissance,date_deces,vivant")
+        .in("id", freresIds)
     : { data: null as null };
 
   const parId = new Map<string, Personne>();
@@ -194,7 +229,7 @@ export default async function FichePersonnePage({
   ];
 
   return (
-    <main className="mx-auto max-w-2xl p-4 sm:p-6">
+    <main className="mx-auto max-w-2xl p-4 pb-24 sm:p-6 md:pb-6">
       <div className="flex items-center gap-3">
         <Logo />
         <Link
@@ -316,7 +351,62 @@ export default async function FichePersonnePage({
         </Bloc>
       </section>
 
+      <section className="mt-4 grid gap-4 sm:grid-cols-3">
+        <Bloc
+          titre="Frères & sœurs"
+          vide="Aucun frère ni sœur déclaré"
+          nombre={freresIds.length}
+        >
+          {freresIds.map((fid) => (
+            <LienPersonne
+              key={fid}
+              id={fid}
+              personne={(liesFreres ?? []).find((f) => f.id === fid) as Personne | undefined}
+            />
+          ))}
+        </Bloc>
+        <section className="rounded-xl border border-current/10 bg-white p-4 sm:col-span-2">
+          <h2 className="mb-2 flex items-center gap-2 font-semibold">
+            <Play className="h-4 w-4 text-emerald-700" aria-hidden />
+            Témoignages audio
+          </h2>
+          {temoignages.length === 0 ? (
+            <p className="text-sm opacity-60">
+              Aucun témoignage enregistré. Enregistrez le premier avec l&apos;onglet
+              « Activités » → « Témoignage audio ».
+            </p>
+          ) : (
+            <ul className="flex flex-col gap-3">
+              {temoignages.map((t) => (
+                <li key={t.id} className="rounded-xl border border-neutral-200 p-3">
+                  <div className="mb-1 flex items-center justify-between gap-2">
+                    <span className="truncate text-sm font-semibold">
+                      {t.titre ?? "Témoignage"}
+                    </span>
+                    {t.duree ? (
+                      <span className="inline-flex shrink-0 items-center gap-1 text-xs opacity-60">
+                        <Clock className="h-3.5 w-3.5" aria-hidden />
+                        {`${Math.floor(t.duree / 60)}:${String(Math.round(t.duree % 60)).padStart(2, "0")}`}
+                      </span>
+                    ) : null}
+                  </div>
+                  <audio
+                    controls
+                    preload="none"
+                    src={`/audio?t=${encodeURIComponent(t.audio_url)}`}
+                    className="w-full"
+                  />
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      </section>
+
       {estEditeur && <ActionsFiche id={id} />}
+
+      <ActionsFlottantes id={id} />
+      <NavigationBas />
     </main>
   );
 }

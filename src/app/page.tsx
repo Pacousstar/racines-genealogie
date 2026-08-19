@@ -1,3 +1,4 @@
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
@@ -9,5 +10,9 @@ export default async function HomePage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  redirect(user ? "/tableau" : "/login");
+  if (!user) redirect("/login");
+
+  const ua = (await headers()).get("user-agent") ?? "";
+  const mobile = /Android|iPhone|iPad|iPod|Mobile/i.test(ua);
+  redirect(mobile ? "/accueil" : "/tableau");
 }

@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import FormulaireDeclaration, {
   type PersonneEdition,
 } from "@/components/saisie/formulaire-declaration";
+import NavigationBas from "@/components/mobile/navigation-bas";
 import Logo from "@/components/branding/logo";
 import type { ResultatPersonne } from "@/components/saisie/recherche-personne";
 
@@ -177,7 +178,7 @@ export default async function ModifierPersonnePage({
   };
 
   return (
-    <main className="min-h-dvh p-4 sm:p-6">
+    <main className="min-h-dvh p-4 pb-24 sm:p-6 md:pb-6">
       <div className="mx-auto max-w-3xl">
         <div className="flex items-center gap-3">
           <Logo />
@@ -209,6 +210,7 @@ export default async function ModifierPersonnePage({
           }}
         />
       </div>
+      <NavigationBas />
     </main>
   );
 }
