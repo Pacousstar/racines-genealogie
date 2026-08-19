@@ -13,11 +13,16 @@ const ONGLETS = [
   { href: "/plus", label: "Plus", Icon: Ellipsis, central: false },
 ];
 
-export default function NavigationBas() {
+export default function NavigationBas({ dansFlux = false }: { dansFlux?: boolean }) {
   const chemin = usePathname();
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-neutral-200 bg-white pb-[env(safe-area-inset-bottom)] shadow-[0_-2px_12px_rgba(0,0,0,0.08)] md:hidden">
+    <nav
+      className={cn(
+        "z-50 border-t border-neutral-200 bg-white pb-[env(safe-area-inset-bottom)] shadow-[0_-2px_12px_rgba(0,0,0,0.08)] md:hidden",
+        dansFlux ? "relative" : "fixed inset-x-0 bottom-0"
+      )}
+    >
       <div className="grid grid-cols-5">
         {ONGLETS.map(({ href, label, Icon, central }) => {
           const actif = central

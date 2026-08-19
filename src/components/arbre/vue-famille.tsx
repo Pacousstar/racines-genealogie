@@ -64,7 +64,7 @@ function CarteFamille({
         }
       }}
       className={cn(
-        "group relative flex w-44 cursor-pointer flex-col gap-1.5 rounded-xl border-2 bg-white p-3 text-center shadow-sm transition hover:-translate-y-0.5 hover:shadow-md",
+        "group relative flex w-44 cursor-pointer flex-col gap-1.5 rounded-xl border-2 bg-white p-3 text-center text-blue-900 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md",
         mort
           ? "border-neutral-300 opacity-80 grayscale"
           : couleur
@@ -85,7 +85,7 @@ function CarteFamille({
       </Link>
 
       {ancetre && (
-        <span className="absolute -top-3 left-1/2 inline-flex -translate-x-1/2 items-center gap-0.5 rounded-full bg-amber-500 px-2.5 py-1 text-xs font-bold text-white shadow">
+        <span className="absolute -top-3 left-1/2 inline-flex -translate-x-1/2 items-center gap-0.5 rounded-full bg-amber-500 px-2.5 py-1 text-sm font-bold text-white shadow">
           <Star className="h-3.5 w-3.5" aria-hidden /> Ancêtre
         </span>
       )}
@@ -115,25 +115,25 @@ function CarteFamille({
       </div>
 
       <div>
-        <div className="text-base font-bold leading-tight">{nomComplet(p)}</div>
+        <div className="text-lg font-bold leading-tight">{nomComplet(p)}</div>
         {p.surnom && (
           <div className="text-sm italic opacity-80">« {p.surnom} »</div>
         )}
       </div>
 
-      <div className="flex items-center justify-center gap-1 text-sm opacity-90">
+      <div className="flex items-center justify-center gap-1 text-base opacity-90">
         {p.sexe && <span>{p.sexe === "M" ? "♂" : "♀"}</span>}
         <span>{periode(p)}</span>
       </div>
 
       {quartier && (
-        <span className="mx-auto inline-flex max-w-full items-center gap-0.5 truncate rounded-full bg-current/10 px-2 py-0.5 text-xs font-medium opacity-95">
+        <span className="mx-auto inline-flex max-w-full items-center gap-0.5 truncate rounded-full bg-current/10 px-2 py-0.5 text-sm font-medium opacity-95">
           {quartier}
         </span>
       )}
 
       {p.fiabilite === "confirmé" && (
-        <span className="mx-auto rounded-full bg-emerald-500/15 px-2.5 py-1 text-xs font-semibold text-emerald-800">
+        <span className="mx-auto rounded-full bg-emerald-500/15 px-2.5 py-1 text-sm font-semibold text-emerald-800">
           ✓ confirmé
         </span>
       )}

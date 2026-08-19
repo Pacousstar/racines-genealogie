@@ -43,7 +43,7 @@ export default function PersonneCarte({
     <Link
       href={`/tableau/personnes/${p.id}`}
       className={cn(
-        "group relative flex w-44 flex-col gap-1.5 rounded-xl border-2 bg-white p-3 text-center shadow-sm transition hover:-translate-y-0.5 hover:shadow-md",
+        "group relative flex w-44 flex-col gap-1.5 rounded-xl border-2 bg-white p-3 text-center text-blue-900 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md",
         mort
           ? "border-neutral-300 opacity-80 grayscale"
           : "border-emerald-700/60 hover:border-emerald-700",
@@ -54,7 +54,7 @@ export default function PersonneCarte({
       )}
     >
       {ancetre && (
-        <span className="absolute -top-3 left-1/2 inline-flex -translate-x-1/2 items-center gap-0.5 rounded-full bg-amber-500 px-2.5 py-1 text-xs font-bold text-white shadow">
+        <span className="absolute -top-3 left-1/2 inline-flex -translate-x-1/2 items-center gap-0.5 rounded-full bg-amber-500 px-2.5 py-1 text-sm font-bold text-white shadow">
           <Star className="h-3.5 w-3.5" aria-hidden /> Ancêtre
         </span>
       )}
@@ -83,19 +83,19 @@ export default function PersonneCarte({
       </div>
 
       <div>
-        <div className="text-base font-bold leading-tight">{nomComplet(p)}</div>
+        <div className="text-lg font-bold leading-tight">{nomComplet(p)}</div>
         {p.surnom && (
           <div className="text-sm italic opacity-80">« {p.surnom} »</div>
         )}
       </div>
 
-      <div className="flex items-center justify-center gap-1 text-sm opacity-90">
+      <div className="flex items-center justify-center gap-1 text-base opacity-90">
         {p.sexe && <span>{p.sexe === "M" ? "♂" : "♀"}</span>}
         <span>{periode(p)}</span>
       </div>
 
       {(quartier || famille || p.est_fondateur === true) && (
-        <div className="flex max-w-full flex-col items-center gap-0.5 text-xs leading-tight">
+        <div className="flex max-w-full flex-col items-center gap-0.5 text-sm leading-tight">
           {p.est_fondateur === true && (
             <span className="inline-flex items-center gap-1 rounded-full bg-purple-500/20 px-2 py-0.5 font-semibold text-purple-800">
               <Crown className="h-3.5 w-3.5" aria-hidden /> Fondateur
@@ -116,22 +116,22 @@ export default function PersonneCarte({
       )}
 
       {p.fiabilite === "confirmé" && (
-        <span className="rounded-full bg-emerald-500/15 px-2.5 py-1 text-xs font-semibold text-emerald-800">
+        <span className="rounded-full bg-emerald-500/15 px-2.5 py-1 text-sm font-semibold text-emerald-800">
           ✓ confirmé
         </span>
       )}
       {p.fiabilite === "probable" && (
-        <span className="rounded-full bg-yellow-500/20 px-2.5 py-1 text-xs font-semibold text-yellow-800">
+        <span className="rounded-full bg-yellow-500/20 px-2.5 py-1 text-sm font-semibold text-yellow-800">
           probable
         </span>
       )}
       {!partenaire && avecConjoint && (
-        <span className="inline-flex items-center gap-1 text-xs font-semibold text-violet-700">
+        <span className="inline-flex items-center gap-1 text-sm font-semibold text-violet-700">
           <Heart className="h-3.5 w-3.5" aria-hidden /> uni(e)
         </span>
       )}
       {surligne && (
-        <span className="inline-flex items-center gap-1 rounded-full bg-amber-500 px-2.5 py-1 text-xs font-bold text-white">
+        <span className="inline-flex items-center gap-1 rounded-full bg-amber-500 px-2.5 py-1 text-sm font-bold text-white">
           ✓ trouvé
         </span>
       )}

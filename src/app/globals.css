@@ -11,14 +11,6 @@
   --arbre-ligne: rgba(28, 42, 31, 0.6);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #12170f;
-    --foreground: #eef2e6;
-    --arbre-ligne: rgba(238, 242, 230, 0.6);
-  }
-}
-
 * {
   box-sizing: border-box;
 }

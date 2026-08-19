@@ -81,7 +81,7 @@ export default async function TableauPage() {
 
   return (
     <div className="flex min-h-dvh flex-col">
-      <header className="flex flex-wrap items-center gap-4 border-b border-white/15 px-4 py-3 text-white sm:px-6">
+      <header className="flex flex-wrap items-center gap-3 border-b border-white/15 px-4 py-3 text-white sm:px-6">
         <Logo />
         <div className="min-w-0">
           <h1 className="text-lg font-bold leading-tight sm:text-xl">
@@ -93,32 +93,35 @@ export default async function TableauPage() {
           </p>
         </div>
 
-        <div className="ml-auto flex items-center gap-2 text-xs">
+        <div className="ml-auto flex items-center gap-2 text-sm lg:text-xs">
           {estEditeur && (
             <a
               href="/tableau/declarer"
-              className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-700 px-3 py-1.5 font-semibold text-white transition hover:bg-emerald-800"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-700 px-4 py-2.5 font-semibold text-white transition hover:bg-emerald-800 lg:px-3 lg:py-1.5 lg:text-sm"
             >
-              <FilePenLine className="h-4 w-4" aria-hidden />
+              <FilePenLine className="h-5 w-5 lg:h-4 lg:w-4" aria-hidden />
               Déclarer
             </a>
           )}
           <a
             href="/tableau/carte"
-            className="inline-flex items-center gap-1.5 rounded-lg border border-amber-700/50 bg-amber-50 px-3 py-1.5 font-semibold text-amber-800 transition hover:bg-amber-100"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-amber-700/50 bg-amber-50 px-4 py-2.5 font-semibold text-amber-800 transition hover:bg-amber-100 lg:px-3 lg:py-1.5 lg:text-sm"
             title="Carte du village"
           >
-            <Map className="h-4 w-4" aria-hidden />
+            <Map className="h-5 w-5 lg:h-4 lg:w-4" aria-hidden />
             Carte
           </a>
           <a
             href="/tableau/quartiers"
-            className="inline-flex items-center gap-1.5 rounded-lg border border-current/20 px-3 py-1.5 font-medium transition hover:bg-current/10"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-current/20 px-4 py-2.5 font-medium transition hover:bg-current/10 lg:px-3 lg:py-1.5 lg:text-sm"
             title="Modifier les quartiers du village"
           >
-            <MapPinned className="h-4 w-4" aria-hidden />
+            <MapPinned className="h-5 w-5 lg:h-4 lg:w-4" aria-hidden />
             Quartiers
           </a>
+        </div>
+
+        <div className="hidden items-center gap-2 text-xs lg:flex">
           <a
             href="/tableau/aides"
             className="inline-flex items-center gap-1.5 rounded-lg border border-current/20 px-3 py-1.5 font-medium transition hover:bg-current/10"
@@ -159,7 +162,7 @@ export default async function TableauPage() {
         </div>
       </header>
 
-      <main className="flex min-h-0 flex-1 flex-col p-4 pb-20 md:pb-4">
+      <main className="flex min-h-0 flex-1 flex-col p-0 lg:p-4">
         <Explorateur
           personnes={personnes}
           liens={liens}
@@ -169,7 +172,7 @@ export default async function TableauPage() {
         />
       </main>
 
-      <NavigationBas />
+      <NavigationBas dansFlux />
     </div>
   );
 }

@@ -79,36 +79,36 @@ export default async function AccueilPage() {
 
         <Link
           href="/tableau"
-          className="flex flex-col gap-1 rounded-2xl bg-white p-5 shadow-lg transition active:scale-[0.99]"
+          className="flex flex-col gap-1.5 rounded-2xl bg-white p-6 shadow-lg transition active:scale-[0.99]"
         >
-          <span className="flex items-center gap-2 text-lg font-bold text-emerald-800">
-            <Trees className="h-6 w-6 text-emerald-700" aria-hidden />
+          <span className="flex items-center gap-2.5 text-2xl font-bold text-emerald-800">
+            <Trees className="h-8 w-8 text-emerald-700" aria-hidden />
             MON ARBRE
           </span>
-          <span className="text-sm text-neutral-600">
+          <span className="text-base text-neutral-600">
             Explorer ma famille — parents, enfants, unions
           </span>
         </Link>
 
         <section className="rounded-2xl bg-white/15 p-4 backdrop-blur-sm">
-          <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-white">
+          <h3 className="mb-3 text-base font-bold uppercase tracking-wide text-white">
             Actions rapides
           </h3>
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-3">
             {ACTIONS.map(({ href, label, detail, Icon }) => (
               <Link
                 key={href}
                 href={href}
-                className="flex items-center gap-3 rounded-xl bg-white px-4 py-3 shadow-sm transition active:scale-[0.99]"
+                className="flex items-center gap-4 rounded-xl bg-white px-4 py-4 shadow-sm transition active:scale-[0.99]"
               >
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-700 text-white">
-                  <Icon className="h-5 w-5" aria-hidden />
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-emerald-700 text-white">
+                  <Icon className="h-6 w-6" aria-hidden />
                 </span>
                 <span className="min-w-0">
-                  <span className="block text-base font-semibold text-blue-900">
+                  <span className="block text-lg font-semibold text-blue-900">
                     {label}
                   </span>
-                  <span className="block truncate text-xs text-neutral-500">
+                  <span className="block truncate text-sm text-neutral-500">
                     {detail}
                   </span>
                 </span>
