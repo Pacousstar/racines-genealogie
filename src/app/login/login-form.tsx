@@ -8,7 +8,7 @@ import Logo from "@/components/branding/logo";
 const initialState: LoginState = undefined;
 const initialStateReset: ResetState = undefined;
 
-export default function LoginForm() {
+export default function LoginForm({ erreur }: { erreur?: string }) {
   const [state, formAction, pending] = useActionState(login, initialState);
   const [resetState, resetAction, resetPending] = useActionState(
     envoyerLienReset,
@@ -128,6 +128,17 @@ export default function LoginForm() {
                 className="rounded-lg bg-red-600/15 px-3 py-2 text-sm text-red-700"
               >
                 {state.erreur}
+              </p>
+            )}
+
+            {erreur === "config" && (
+              <p
+                role="alert"
+                className="rounded-lg bg-red-600/15 px-3 py-2 text-sm text-red-700"
+              >
+                Configuration incomplète : ajoutez NEXT_PUBLIC_SUPABASE_URL et
+                NEXT_PUBLIC_SUPABASE_ANON_KEY dans les variables
+                d&apos;environnement Vercel, puis redéployez.
               </p>
             )}
 

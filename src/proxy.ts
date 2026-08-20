@@ -8,6 +8,12 @@ export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
 
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    // Variables d'environnement absentes (configuration Vercel incomplète) :
+    // on laisse la page /login s'afficher avec un message explicite au lieu
+    // de se rediriger soi-même en boucle.
+    if (request.nextUrl.pathname === "/login") {
+      return NextResponse.next({ request });
+    }
     return NextResponse.redirect(new URL("/login?erreur=config", request.url));
   }
 
