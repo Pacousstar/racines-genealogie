@@ -74,7 +74,11 @@ function CarteFamille({
         ancetre && !mort && "border-amber-500 bg-amber-100 shadow-md",
         centrale && "ring-4 ring-emerald-700/25"
       )}
-      style={couleur && !mort ? { backgroundColor: TINTE[couleur] } : undefined}
+      style={
+        !ancetre && couleur && !mort
+          ? { backgroundColor: TINTE[couleur] }
+          : undefined
+      }
     >
       <Link
         href={`/tableau/personnes/${p.id}`}
@@ -363,13 +367,13 @@ export default function VueFamille({
             {enfants.length > 0 && (
               <>
                 <div
-                  className="mx-auto h-11 w-0.5"
+                  className="mx-auto h-16 w-0.5"
                   style={{ background: "var(--arbre-ligne)" }}
                 />
                 <ul className={cn(styles.fratrie, styles.arbre, "mx-auto")}>
                   {enfants.map(({ personne: enfant, autreParent }) => (
                     <li key={enfant.id}>
-                      <div className="flex items-center justify-center">
+                      <div className="flex items-start justify-center">
                         <span className={styles.attache}>
                           {carte(enfant, setFocusId)}
                         </span>
@@ -381,7 +385,9 @@ export default function VueFamille({
                               aria-hidden
                             />
                             <span className="relative flex flex-col items-center gap-1">
-                              {carte(autreParent, setFocusId)}
+                              <span className={styles.attache}>
+                                {carte(autreParent, setFocusId)}
+                              </span>
                               <span className="rounded-full bg-neutral-200 px-2 py-0.5 text-xs font-bold text-neutral-600">
                                 {autreParent.sexe === "M" ? "père de" : "mère de"}
                               </span>
