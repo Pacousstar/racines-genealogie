@@ -37,7 +37,15 @@ export async function restaurer(
     return { erreur: "Fichier invalide — ce n'est pas une sauvegarde Racines+." };
   }
 
-  const admin = createClientServiceRole();
+  let admin;
+  try {
+    admin = createClientServiceRole();
+  } catch {
+    return {
+      erreur:
+        "La clé SUPABASE_SERVICE_ROLE_KEY n'est pas configurée sur ce serveur — la restauration est indisponible ici.",
+    };
+  }
 
   const entrant = donnees.donnees as Record<string, unknown[]>;
   let nombre = 0;

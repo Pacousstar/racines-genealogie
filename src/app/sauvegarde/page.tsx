@@ -12,22 +12,37 @@ export default async function SauvegardePage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const admin = createClientServiceRole();
-
-  const table = async (nom: string) => {
-    const { count } = await admin.from(nom).select("id", { count: "exact", head: true });
-    return count ?? 0;
+  let comptes = {
+    personnes: 0,
+    liens: 0,
+    unions: 0,
+    quartiers: 0,
+    familles: 0,
+    temoignages: 0,
   };
 
-  const [personnes, liens, unions, quartiers, familles, temoignages] =
-    await Promise.all([
-      table("personnes"),
-      table("enfants"),
-      table("unions"),
-      table("quartiers"),
-      table("familles"),
-      table("temoignages"),
-    ]);
+  try {
+    const admin = createClientServiceRole();
+    const table = async (nom: string) => {
+      const { count } = await admin
+        .from(nom)
+        .select("id", { count: "exact", head: true });
+      return count ?? 0;
+    };
+    const [personnes, liens, unions, quartiers, familles, temoignages] =
+      await Promise.all([
+        table("personnes"),
+        table("enfants"),
+        table("unions"),
+        table("quartiers"),
+        table("familles"),
+        table("temoignages"),
+      ]);
+    comptes = { personnes, liens, unions, quartiers, familles, temoignages };
+  } catch {
+    // Clé service role non configurée ici : compteurs à zéro, la page
+    // d'export donnera une explication claire.
+  }
 
   return (
     <div className="min-h-dvh pb-24 md:pb-0">
@@ -37,14 +52,7 @@ export default async function SauvegardePage() {
       <main className="mx-auto max-w-xl px-4 pt-5">
         <SauvegardeClient
           courriel={user?.email ?? null}
-          comptes={{
-            personnes,
-            liens,
-            unions,
-            quartiers,
-            familles,
-            temoignages,
-          }}
+          comptes={comptes}
         />
       </main>
     </div>

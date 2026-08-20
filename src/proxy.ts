@@ -11,6 +11,12 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL("/login?erreur=config", request.url));
   }
 
+  // Cookies à reporter sur la réponse finale (surtout les redirections) :
+  // si le jeton a été renouvelé pendant la requête, ces cookies doivent
+  // accompagner la redirection, sinon le nouveau jeton est perdu et le
+  // refresh token (rotatif) déjà consommé provoque une boucle infinie.
+  let cookiesAReporter: { name: string; value: string }[] = [];
+
   const supabase = createServerClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     cookies: {
       getAll() {
@@ -20,7 +26,7 @@ export async function proxy(request: NextRequest) {
         cookiesToSet.forEach(({ name, value }) =>
           request.cookies.set(name, value)
         );
-        response = NextResponse.next({ request });
+        cookiesAReporter = cookiesToSet;
         cookiesToSet.forEach(({ name, value }) =>
           response.cookies.set(name, value)
         );
@@ -36,11 +42,18 @@ export async function proxy(request: NextRequest) {
   const isReinit = request.nextUrl.pathname.startsWith("/reinitialiser");
   const isPublic = request.nextUrl.pathname.startsWith("/_next");
 
+  const reporterCookies = (cible: NextResponse) => {
+    cookiesAReporter.forEach(({ name, value }) => cible.cookies.set(name, value));
+    return cible;
+  };
+
   if (!user && !isLogin && !isReinit && !isPublic) {
-    return NextResponse.redirect(new URL("/login", request.url));
+    return reporterCookies(NextResponse.redirect(new URL("/login", request.url)));
   }
   if (user && isLogin) {
-    return NextResponse.redirect(new URL("/tableau", request.url));
+    return reporterCookies(
+      NextResponse.redirect(new URL("/tableau", request.url))
+    );
   }
   return response;
 }

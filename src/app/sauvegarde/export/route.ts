@@ -35,17 +35,27 @@ export async function GET() {
 
   const donnees: Record<string, unknown[]> = {};
   const erreurs: string[] = [];
-  for (const table of TABLES) {
-    const { data, error } = await admin.from(table).select("*").order("id");
-    if (error) {
-      if (/does not exist|could not find/i.test(error.message)) {
-        donnees[table] = [];
+  try {
+    for (const table of TABLES) {
+      const { data, error } = await admin.from(table).select("*").order("id");
+      if (error) {
+        if (/does not exist|could not find/i.test(error.message)) {
+          donnees[table] = [];
+          continue;
+        }
+        erreurs.push(`${table}: ${error.message}`);
         continue;
       }
-      erreurs.push(`${table}: ${error.message}`);
-      continue;
+      donnees[table] = data ?? [];
     }
-    donnees[table] = data ?? [];
+  } catch (e) {
+    return NextResponse.json(
+      {
+        erreur:
+          "La clé SUPABASE_SERVICE_ROLE_KEY n'est pas configurée sur ce serveur — l'export est indisponible ici. Configurez-la dans les variables d'environnement de Vercel.",
+      },
+      { status: 500 }
+    );
   }
 
   const date = new Date().toISOString();
