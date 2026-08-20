@@ -23,6 +23,24 @@
   background: var(--arbre-ligne);
 }
 
+/* Vue « Famille proche » : la liste des enfants est le ul racine lui-même,
+   non imbriqué dans un .arbre — le sélecteur ci-dessus ne s'y applique pas.
+   Cette classe redonne la barre horizontale de fratrie. */
+.fratrie {
+  position: relative;
+  padding-top: 20px;
+}
+
+.fratrie::before {
+  content: "";
+  position: absolute;
+  top: 20px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--arbre-ligne);
+}
+
 .arbre li {
   position: relative;
   padding: 20px 6px 0;

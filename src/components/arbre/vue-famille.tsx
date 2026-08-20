@@ -29,6 +29,7 @@ type Props = {
   quartiers: { id: string; nom: string }[];
   familles: { id: string; nom: string; quartier_id: string | null }[];
   onBasculerArbre: () => void;
+  focusInitial?: string | null;
 };
 
 function CarteFamille({
@@ -158,6 +159,7 @@ export default function VueFamille({
   quartiers,
   familles,
   onBasculerArbre,
+  focusInitial = null,
 }: Props) {
   const parId = useMemo(
     () => new Map(personnes.map((p) => [p.id, p])),
@@ -173,7 +175,7 @@ export default function VueFamille({
     [personnes]
   );
 
-  const [focusId, setFocusId] = useState<string | null>(ancetreId);
+  const [focusId, setFocusId] = useState<string | null>(focusInitial ?? ancetreId);
 
   const labels = useMemo(() => {
     const quartiersParId = new Map(quartiers.map((q) => [q.id, q.nom]));
@@ -362,18 +364,25 @@ export default function VueFamille({
                   className="mx-auto h-11 w-0.5"
                   style={{ background: "var(--arbre-ligne)" }}
                 />
-                <ul className={cn(styles.arbre, "mx-auto")}>
+                <ul className={cn(styles.fratrie, styles.arbre, "mx-auto")}>
                   {enfants.map(({ personne: enfant, autreParent }) => (
                     <li key={enfant.id}>
-                      <div className="relative flex justify-center">
+                      <div className="flex items-center justify-center">
                         <span className={styles.attache}>
                           {carte(enfant, setFocusId)}
                         </span>
                         {autreParent && (
                           <>
-                            <UnionSep />
-                            <span className={styles.attache}>
+                            <div
+                              className="mx-1 h-0.5 w-10"
+                              style={{ background: "var(--arbre-ligne)" }}
+                              aria-hidden
+                            />
+                            <span className="relative flex flex-col items-center gap-1">
                               {carte(autreParent, setFocusId)}
+                              <span className="rounded-full bg-neutral-200 px-2 py-0.5 text-xs font-bold text-neutral-600">
+                                {autreParent.sexe === "M" ? "père de" : "mère de"}
+                              </span>
                             </span>
                           </>
                         )}
