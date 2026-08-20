@@ -53,7 +53,7 @@ export type PersonneEdition = {
   pere: ResultatPersonne | null;
   mere: ResultatPersonne | null;
   conjoints: ResultatPersonne[];
-  enfants: ResultatPersonne[];
+  enfants: (ResultatPersonne & { autre_parent?: ResultatPersonne | null })[];
 };
 
 const SOURCES = ["Témoignage du CHO", "Registre", "Document", "Autre"];
@@ -123,14 +123,17 @@ const detailDe = (p: ResultatPersonne | null): DetailLien => ({
   dateDeces: p?.date_deces ?? "",
 });
 
-const ligneDe = (p: ResultatPersonne | null): EnfantLigne => ({
+const ligneDe = (
+  p: ResultatPersonne | null,
+  autre?: ResultatPersonne | null
+): EnfantLigne => ({
   personne: p,
   mode: "relier",
   nouvelle: null,
   naissance: p?.date_naissance ?? "",
   decede: Boolean(p && p.vivant === false),
   deces: p?.date_deces ?? "",
-  autreParent: null,
+  autreParent: autre ?? null,
   autreMode: "relier",
   autreNouvelle: null,
 });
@@ -495,7 +498,7 @@ export default function FormulaireDeclaration({
     detailDe(personne?.mere ?? precisions.mere ?? null)
   );
   const [enfants, setEnfants] = useState<EnfantLigne[]>(
-    (personne?.enfants ?? []).map(ligneDe).concat(
+    (personne?.enfants ?? []).map((e) => ligneDe(e, e.autre_parent)).concat(
       !personne && precisions.enfant ? [ligneDe(precisions.enfant)] : []
     )
   );
@@ -707,7 +710,7 @@ export default function FormulaireDeclaration({
     setConjoints((personne?.conjoints ?? []).map(ligneConjointDe));
     setPereDetail(detailDe(personne?.pere ?? null));
     setMereDetail(detailDe(personne?.mere ?? null));
-    setEnfants((personne?.enfants ?? []).map(ligneDe));
+    setEnfants((personne?.enfants ?? []).map((e) => ligneDe(e, e.autre_parent)));
     setCleForm((n) => n + 1);
     setPereMode(personne?.pere ? "relier" : "declarer");
     setMereMode(personne?.mere ? "relier" : "declarer");

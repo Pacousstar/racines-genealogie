@@ -97,15 +97,17 @@ async function insererUnion(
   conjointA: string,
   conjointB: string,
   rang: number
-): Promise<void> {
+): Promise<string | null> {
   const essai = await supabase
     .from("unions")
     .insert({ conjoint_1: conjointA, conjoint_2: conjointB, type: "mariage", rang });
   if (essai.error && COLONNE_MANQUANTE.test(essai.error.message)) {
-    await supabase
+    const repli = await supabase
       .from("unions")
       .insert({ conjoint_1: conjointA, conjoint_2: conjointB, type: "mariage" });
+    return repli.error ? repli.error.message : null;
   }
+  return essai.error ? essai.error.message : null;
 }
 
 // Repli si les nouvelles colonnes (retraite, residence, crise_2010_2011)
@@ -225,35 +227,23 @@ export async function modifier(
       conjointId = await creerNouvellePersonne(supabase, conjoint.nouveau, m.source);
     }
     if (!conjointId) continue;
-    await insererUnion(supabase, id, conjointId, i);
+    const erreurUnion = await insererUnion(supabase, id, conjointId, i);
+    if (erreurUnion) {
+      return {
+        erreur: `L'union avec le conjoint n°${i + 1} n'a pas pu être enregistrée : ${erreurUnion}`,
+      };
+    }
     await appliquerDetailLien(supabase, conjointId, conjoint.detail);
   }
 
   // Enfants : on remplace les liens parent → enfant, et pour chaque enfant on
   // réécrit aussi le lien vers son AUTRE parent (père ou mère), pour que les
   // enfants de X et de Y ne soient pas mélangés.
-  const { data: anciensEnfants } = await supabase
-    .from("enfants")
-    .select("enfant_id")
-    .eq("parent_id", id);
-
   await supabase.from("enfants").delete().eq("parent_id", id);
 
-  const enfantsIdsGardes = new Set(
-    (m.enfants ?? [])
-      .map((e) => e.id)
-      .filter((x): x is string => Boolean(x))
-  );
-  for (const ancien of anciensEnfants ?? []) {
-    if (enfantsIdsGardes.has(ancien.enfant_id)) continue;
-    // Enfant retiré de la déclaration : on retire aussi son autre lien de
-    // parenté pour que le couple ne le compte plus dans l'arbre.
-    await supabase
-      .from("enfants")
-      .delete()
-      .eq("enfant_id", ancien.enfant_id)
-      .neq("parent_id", id);
-  }
+  // Enfant retiré de la déclaration : seul le lien de cette personne est
+  // retiré. Le lien vers l'« autre parent » (la mère par exemple) reste,
+  // car cet enfant continue de lui appartenir dans l'arbre.
 
   for (const [index, enfant] of (m.enfants ?? []).entries()) {
     let enfantId = enfant.id;

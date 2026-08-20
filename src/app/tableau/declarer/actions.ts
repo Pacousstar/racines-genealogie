@@ -106,15 +106,17 @@ async function insererUnion(
   conjointA: string,
   conjointB: string,
   rang: number
-): Promise<void> {
+): Promise<string | null> {
   const essai = await supabase
     .from("unions")
     .insert({ conjoint_1: conjointA, conjoint_2: conjointB, type: "mariage", rang });
   if (essai.error && COLONNE_MANQUANTE.test(essai.error.message)) {
-    await supabase
+    const repli = await supabase
       .from("unions")
       .insert({ conjoint_1: conjointA, conjoint_2: conjointB, type: "mariage" });
+    return repli.error ? repli.error.message : null;
   }
+  return essai.error ? essai.error.message : null;
 }
 
 async function insererPersonne(
@@ -261,7 +263,12 @@ export async function declarer(
       conjointId = await creerPersonne(supabase, conjoint.nouveau, d.source);
     }
     if (!conjointId) continue;
-    await insererUnion(supabase, id, conjointId, i);
+    const erreurUnion = await insererUnion(supabase, id, conjointId, i);
+    if (erreurUnion) {
+      return {
+        erreur: `L'union avec le conjoint n°${i + 1} n'a pas pu être enregistrée : ${erreurUnion}`,
+      };
+    }
     if (!conjoint.id) {
       if (conjoint.nouveau?.decede) {
         await supabase

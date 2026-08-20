@@ -32,6 +32,10 @@ function tempsCourant(): string {
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
 
+const isIOS =
+  typeof navigator !== "undefined" &&
+  /iPad|iPhone|iPod/.test(navigator.userAgent);
+
 export default function TemoignagePage() {
   const [personne, setPersonne] = useState<ResultatPersonne | null>(null);
   const [temoignages, setTemoignages] = useState<Temoignage[]>([]);
@@ -41,9 +45,31 @@ export default function TemoignagePage() {
   const [secondes, setSecondes] = useState(0);
   const [envoi, setEnvoi] = useState(false);
   const [titre, setTitre] = useState("");
+  const [microEtat, setMicroEtat] = useState<
+    "demande" | "accord" | "refuse" | "inconnu"
+  >("inconnu");
   const mediaRef = useRef<MediaRecorder | null>(null);
   const pistesRef = useRef<Blob[]>([]);
   const intervalleRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    if (typeof navigator === "undefined" || !navigator.permissions?.query) return;
+    navigator.permissions
+      .query({ name: "microphone" as PermissionName })
+      .then((statut) => {
+        const maj = () =>
+          setMicroEtat(
+            statut.state === "granted"
+              ? "accord"
+              : statut.state === "denied"
+                ? "refuse"
+                : "demande"
+          );
+        maj();
+        statut.onchange = maj;
+      })
+      .catch(() => {});
+  }, []);
 
   const charger = async (id: string) => {
     setChargement(true);
@@ -86,6 +112,7 @@ export default function TemoignagePage() {
     if (!personne) return;
     try {
       const flux = await navigator.mediaDevices.getUserMedia({ audio: true });
+      setMicroEtat("accord");
       const enregistreur = new MediaRecorder(flux);
       mediaRef.current = enregistreur;
       pistesRef.current = [];
@@ -102,10 +129,24 @@ export default function TemoignagePage() {
         () => setSecondes((s) => s + 1),
         1000
       );
-    } catch {
-      toast.error(
-        "Micro inaccessible — autorisez le micro dans le navigateur (réglages de confidentialité)."
-      );
+    } catch (err) {
+      setMicroEtat("refuse");
+      const nom = err instanceof DOMException ? err.name : "";
+      if (nom === "NotAllowedError" || nom === "PermissionDeniedError") {
+        toast.error(
+          "Micro refusé par le navigateur. Autorisez-le une seule fois : " +
+            (isIOS
+              ? "Réglages de l'iPhone → Safari → Microphone (ou Réglages → Confidentialité → Microphone), puis rechargez la page."
+              : "icône cadenas à gauche de l'adresse → Microphone → Autoriser, puis réessayez.") +
+            " Sans cette autorisation, aucun site ne peut utiliser le micro."
+        );
+      } else if (nom === "NotFoundError" || nom === "DevicesNotFoundError") {
+        toast.error("Aucun microphone détecté sur cet appareil.");
+      } else {
+        toast.error(
+          `Micro inaccessible${nom ? ` (${nom})` : ""}. Si l'application est ouverte dans WhatsApp ou Facebook, ouvrez-la directement dans Chrome ou Safari, puis réessayez.`
+        );
+      }
     }
   };
 
@@ -239,6 +280,13 @@ export default function TemoignagePage() {
                 "Touchez le micro, parlez, touchez le carré pour terminer."
               )}
             </p>
+            {!enregistre && microEtat === "refuse" && (
+              <p className="w-full rounded-xl border border-red-300 bg-red-50 p-3 text-sm text-red-800">
+                Le micro est refusé dans les réglages de votre navigateur.
+                Autorisez-le une seule fois (voir le message), puis revenez :
+                le bouton fonctionnera ensuite à chaque fois.
+              </p>
+            )}
             {!enregistre && !envoi && (
               <label className="flex w-full flex-col gap-1 text-sm">
                 <span className="font-medium text-neutral-700">

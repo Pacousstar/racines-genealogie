@@ -118,6 +118,16 @@ export default async function ModifierPersonnePage({
 
   const parentsIds = (parentsRes.data ?? []).map((r) => r.parent_id);
   const enfantsIds = (enfantsRes.data ?? []).map((r) => r.enfant_id);
+
+  // L'« autre parent » de chaque enfant (la mère en général) : il doit être
+  // réaffiché dans le formulaire, sinon la modification de cette personne le
+  // supprimerait silencieusement.
+  const { data: autresParents } = enfantsIds.length
+    ? await supabase
+        .from("enfants")
+        .select("parent_id,enfant_id")
+        .in("enfant_id", enfantsIds)
+    : { data: null as null };
   const conjointsIds = [
     ...new Set(
       (unionsRes.data ?? []).map((u) =>
@@ -127,7 +137,12 @@ export default async function ModifierPersonnePage({
   ];
 
   const lieIds = [
-    ...new Set([...parentsIds, ...enfantsIds, ...conjointsIds]),
+    ...new Set([
+      ...parentsIds,
+      ...enfantsIds,
+      ...conjointsIds,
+      ...(autresParents ?? []).map((l) => l.parent_id),
+    ]),
   ];
 
   const { data: lies } = lieIds.length
@@ -139,6 +154,15 @@ export default async function ModifierPersonnePage({
 
   const parId = new Map<string, ResultatPersonne>();
   for (const l of lies ?? []) parId.set(l.id, l as ResultatPersonne);
+
+  const autreParentDe = new Map<string, ResultatPersonne | null>();
+  for (const l of autresParents ?? []) {
+    if (l.parent_id === id) continue;
+    const autre = parId.get(l.parent_id);
+    if (autre && !autreParentDe.has(l.enfant_id)) {
+      autreParentDe.set(l.enfant_id, autre);
+    }
+  }
 
   const pere =
     parentsIds.find((pid) => parId.get(pid)?.sexe === "M") ??
@@ -172,9 +196,13 @@ export default async function ModifierPersonnePage({
     conjoints: conjointsIds
       .map((cid) => parId.get(cid))
       .filter((p): p is ResultatPersonne => Boolean(p)),
-    enfants: enfantsIds
-      .map((eid) => parId.get(eid))
-      .filter((p): p is ResultatPersonne => Boolean(p)),
+    enfants: (enfantsIds
+      .map((eid) => {
+        const p = parId.get(eid);
+        if (!p) return null;
+        return { ...p, autre_parent: autreParentDe.get(eid) ?? null };
+      })
+      .filter((p): p is ResultatPersonne & { autre_parent: ResultatPersonne | null } => Boolean(p))),
   };
 
   return (
