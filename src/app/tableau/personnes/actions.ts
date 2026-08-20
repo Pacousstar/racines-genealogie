@@ -334,9 +334,21 @@ export async function mettrePhoto(
   return { id };
 }
 
+export type PersonneRestante = {
+  id: string;
+  nom: string;
+  prenom: string | null;
+  raison: string;
+};
+
+// Supprime la personne et, si `aussiIds` est fourni, les personnes qui n'ont
+// plus aucun lien après la suppression. Renvoie les personnes liées qui se
+// retrouveraient orphelines (sans parents, sans enfants, sans union) pour que
+// l'interface propose de les supprimer aussi.
 export async function supprimer(
-  id: string
-): Promise<{ erreur?: string; id?: string }> {
+  id: string,
+  aussiIds: string[] = []
+): Promise<{ erreur?: string; id?: string; restants?: PersonneRestante[] }> {
   const supabase = await createClient();
 
   const {
@@ -354,25 +366,119 @@ export async function supprimer(
     return { erreur: "Réservé à un éditeur (CHO ou administrateur)." };
   }
 
-  const { data: personne } = await supabase
-    .from("personnes")
-    .select("nom,prenom")
-    .eq("id", id)
-    .single();
+  const idsASupprimer = [...new Set([id, ...(aussiIds ?? [])])];
 
-  const { error } = await supabase.from("personnes").delete().eq("id", id);
-  if (error) {
-    return { erreur: `Suppression impossible : ${error.message}` };
+  const [personnesRes, liensRes, unionsRes] = await Promise.all([
+    supabase.from("personnes").select("id,nom,prenom").in("id", idsASupprimer),
+    supabase
+      .from("enfants")
+      .select("parent_id,enfant_id")
+      .or(
+        idsASupprimer.map((i) => `parent_id.eq.${i},enfant_id.eq.${i}`).join(",")
+      ),
+    supabase
+      .from("unions")
+      .select("conjoint_1,conjoint_2")
+      .or(idsASupprimer.map((i) => `conjoint_1.eq.${i},conjoint_2.eq.${i}`).join(",")),
+  ]);
+
+  const parId = new Map(
+    (personnesRes.data ?? []).map((p) => [p.id, p])
+  );
+  const nom = (pid: string) => {
+    const p = parId.get(pid);
+    return [p?.prenom, p?.nom].filter(Boolean).join(" ") || "Personne inconnue";
+  };
+
+  // Personnes touchées indirectement : leurs enfants et leurs conjoints.
+  const touches = new Set<string>();
+  for (const l of liensRes.data ?? []) {
+    if (idsASupprimer.includes(l.parent_id)) touches.add(l.enfant_id);
+    if (idsASupprimer.includes(l.enfant_id)) touches.add(l.parent_id);
   }
-  try {
-    await supabase.from("journal").insert({
-      action: "suppression",
-      cible_type: "personne",
-      cible_id: id,
-      detail: { nom: personne?.nom ?? null, prenom: personne?.prenom ?? null },
-    });
-  } catch {
-    // Table journal pas encore créée : on ignore.
+  for (const u of unionsRes.data ?? []) {
+    if (idsASupprimer.includes(u.conjoint_1)) touches.add(u.conjoint_2);
+    if (idsASupprimer.includes(u.conjoint_2)) touches.add(u.conjoint_1);
   }
-  return { id };
+
+  // Toutes les personnes à évaluer après suppression : les touchées + les
+  // autres parents des enfants des supprimées.
+  const enfantsIds = [...new Set(
+    (liensRes.data ?? [])
+      .filter((l) => idsASupprimer.includes(l.parent_id))
+      .map((l) => l.enfant_id)
+  )];
+  const { data: coparents } = enfantsIds.length
+    ? await supabase
+        .from("enfants")
+        .select("parent_id,enfant_id")
+        .in("enfant_id", enfantsIds)
+    : { data: null };
+  for (const l of coparents ?? []) {
+    if (!idsASupprimer.includes(l.parent_id)) touches.add(l.parent_id);
+  }
+
+  // Liens restants après suppression (hors idsASupprimer).
+  const { data: tousLiens } = await supabase.from("enfants").select("*");
+  const { data: toutesUnions } = await supabase.from("unions").select("*");
+  const parentsDe = new Map<string, Set<string>>();
+  const enfantsDe = new Map<string, Set<string>>();
+  for (const l of tousLiens ?? []) {
+    if (idsASupprimer.includes(l.parent_id) || idsASupprimer.includes(l.enfant_id)) continue;
+    if (!parentsDe.has(l.enfant_id)) parentsDe.set(l.enfant_id, new Set());
+    parentsDe.get(l.enfant_id)!.add(l.parent_id);
+    if (!enfantsDe.has(l.parent_id)) enfantsDe.set(l.parent_id, new Set());
+    enfantsDe.get(l.parent_id)!.add(l.enfant_id);
+  }
+  const conjointsDe = new Map<string, Set<string>>();
+  for (const u of toutesUnions ?? []) {
+    if (idsASupprimer.includes(u.conjoint_1) || idsASupprimer.includes(u.conjoint_2)) continue;
+    if (!conjointsDe.has(u.conjoint_1)) conjointsDe.set(u.conjoint_1, new Set());
+    conjointsDe.get(u.conjoint_1)!.add(u.conjoint_2);
+    if (!conjointsDe.has(u.conjoint_2)) conjointsDe.set(u.conjoint_2, new Set());
+    conjointsDe.get(u.conjoint_2)!.add(u.conjoint_1);
+  }
+
+  const restants: PersonneRestante[] = [];
+  for (const t of touches) {
+    if (idsASupprimer.includes(t)) continue;
+    const orphelin =
+      !(parentsDe.get(t)?.size) && !(enfantsDe.get(t)?.size) && !(conjointsDe.get(t)?.size);
+    if (orphelin) {
+      const { data: tp } = await supabase
+        .from("personnes")
+        .select("id,nom,prenom")
+        .eq("id", t)
+        .single();
+      if (tp) {
+        restants.push({
+          id: tp.id,
+          nom: tp.nom,
+          prenom: tp.prenom,
+          raison: "n'aura plus aucun lien dans le tableau",
+        });
+      }
+    }
+  }
+
+  for (const sid of idsASupprimer) {
+    const { error } = await supabase.from("personnes").delete().eq("id", sid);
+    if (error) {
+      return { erreur: `Suppression impossible : ${error.message}` };
+    }
+    try {
+      await supabase.from("journal").insert({
+        action: "suppression",
+        cible_type: "personne",
+        cible_id: sid,
+        detail: {
+          nom: parId.get(sid)?.nom ?? null,
+          prenom: parId.get(sid)?.prenom ?? null,
+        },
+      });
+    } catch {
+      // Table journal pas encore créée : on ignore.
+    }
+  }
+  return { id, restants };
 }

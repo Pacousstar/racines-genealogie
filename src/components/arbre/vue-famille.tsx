@@ -71,7 +71,7 @@ function CarteFamille({
           : couleur
             ? BORDES[couleur]
             : "border-emerald-700/60 hover:border-emerald-700",
-        ancetre && !mort && "border-amber-500 shadow-md",
+        ancetre && !mort && "border-amber-500 bg-amber-100 shadow-md",
         centrale && "ring-4 ring-emerald-700/25"
       )}
       style={couleur && !mort ? { backgroundColor: TINTE[couleur] } : undefined}
@@ -96,7 +96,9 @@ function CarteFamille({
           "mx-auto flex h-16 w-16 items-center justify-center rounded-lg text-xl font-bold",
           mort
             ? "bg-neutral-300 text-neutral-600"
-            : "bg-emerald-800 text-white"
+            : ancetre
+              ? "bg-amber-500 text-white"
+              : "bg-emerald-800 text-white"
         )}
         aria-hidden
       >

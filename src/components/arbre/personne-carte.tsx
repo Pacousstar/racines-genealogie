@@ -47,7 +47,7 @@ export default function PersonneCarte({
         mort
           ? "border-neutral-300 opacity-80 grayscale"
           : "border-emerald-700/60 hover:border-emerald-700",
-        ancetre && !mort && "border-amber-500 shadow-md",
+        ancetre && !mort && "border-amber-500 bg-amber-100 shadow-md",
         partenaire && "border-violet-500/70 bg-violet-50/60 hover:border-violet-600",
         avecConjoint && "border-current/20",
         surligne && "border-amber-500 ring-4 ring-amber-400/70 shadow-lg"
@@ -64,9 +64,11 @@ export default function PersonneCarte({
           "flex h-16 w-16 items-center justify-center rounded-lg text-xl font-bold",
           mort
             ? "bg-neutral-300 text-neutral-600"
-            : partenaire
-              ? "bg-violet-700 text-white"
-              : "bg-emerald-800 text-white"
+            : ancetre
+              ? "bg-amber-500 text-white"
+              : partenaire
+                ? "bg-violet-700 text-white"
+                : "bg-emerald-800 text-white"
         )}
         aria-hidden
       >
