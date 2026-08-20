@@ -51,7 +51,7 @@ export default async function ModifierPersonnePage({
   const { data: personne } = (await (async () => {
     const essai = await supabase
       .from("personnes")
-      .select(`${CHAMPS_BASE},retraite,residence,crise_2010_2011,est_ancetre`)
+      .select(`${CHAMPS_BASE},retraite,residence,crise_2010_2011,profession,religion,est_ancetre`)
       .eq("id", id)
       .single();
     if (!essai.error) return essai;
@@ -83,6 +83,8 @@ export default async function ModifierPersonnePage({
           retraite?: boolean | null;
           residence?: string | null;
           crise_2010_2011?: boolean | null;
+          profession?: string | null;
+          religion?: string | null;
           est_ancetre?: boolean | null;
         })
       | null;
@@ -190,6 +192,8 @@ export default async function ModifierPersonnePage({
     retraite: personne.retraite ?? false,
     residence: personne.residence ?? null,
     crise_2010_2011: personne.crise_2010_2011 ?? false,
+    profession: personne.profession ?? null,
+    religion: personne.religion ?? null,
     est_ancetre: personne.est_ancetre ?? false,
     pere: pere ? parId.get(pere) ?? null : null,
     mere: mere ? parId.get(mere) ?? null : null,

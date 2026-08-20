@@ -23,6 +23,8 @@ export type Declaration = {
   photo_url: string | null;
   source: string;
   fiabilite: string;
+  profession: string;
+  religion: string;
   pere_id: string | null;
   mere_id: string | null;
   conjoints: ConjointDeclaration[];
@@ -193,6 +195,8 @@ export async function declarer(
       retraite: d.retraite,
       residence: d.residence.trim() || null,
       crise_2010_2011: d.crise_2010_2011,
+      profession: d.profession?.trim() || null,
+      religion: d.religion?.trim() || null,
     }
   );
 
@@ -313,5 +317,44 @@ export async function declarer(
     }
   }
 
+  // Journal des changements (si la table existe — migration enrichissement.sql)
+  try {
+    await supabase.from("journal").insert({
+      action: "declaration",
+      cible_type: "personne",
+      cible_id: id,
+      detail: { nom: d.nom.trim(), prenom: d.prenom.trim() || null },
+    });
+  } catch {
+    // Table journal pas encore créée : on ignore.
+  }
+
   return { id };
+}
+
+// Vérification de doublons avant enregistrement.
+export async function verifierDoublons(
+  nom: string,
+  prenom: string,
+  idExclu: string | null
+): Promise<{ doublons: { id: string; nom: string; prenom: string | null }[] }> {
+  const supabase = await createClient();
+  const nomNettoye = nom.trim();
+  const prenomNettoye = prenom.trim();
+  if (!nomNettoye) return { doublons: [] };
+
+  let requete = supabase
+    .from("personnes")
+    .select("id,nom,prenom")
+    .ilike("nom", nomNettoye);
+  if (prenomNettoye) {
+    requete = requete.ilike("prenom", prenomNettoye);
+  }
+  if (idExclu) {
+    requete = requete.neq("id", idExclu);
+  }
+  const { data } = await requete.limit(10);
+  return {
+    doublons: (data ?? []).map((p) => ({ id: p.id, nom: p.nom, prenom: p.prenom })),
+  };
 }

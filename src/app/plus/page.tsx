@@ -11,6 +11,9 @@ import {
   Mic,
   Search,
   Trees,
+  Link2,
+  History,
+  Save,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import NavigationBas from "@/components/mobile/navigation-bas";
@@ -31,6 +34,9 @@ export default async function PlusPage() {
     { href: "/recherche", label: "Recherche", detail: "Personnes, familles, quartiers", Icon: Search },
     { href: "/temoignage", label: "Témoignage audio", detail: "Enregistrer un récit de famille", Icon: Mic },
     { href: "/tableau/declarer", label: "Déclarer une personne", detail: "Ajouter à la généalogie", Icon: FilePenLine },
+    { href: "/tableau/a-relier", label: "À relier", detail: "Sans parents, conjoint ou enfants", Icon: Link2 },
+    { href: "/sauvegarde", label: "Sauvegarde", detail: "Exporter ou restaurer toutes les données", Icon: Save },
+    { href: "/tableau/journal", label: "Journal", detail: "Historique des changements", Icon: History },
     { href: "/tableau/carte", label: "Carte du village", detail: "Les quartiers de Toa-Zéo", Icon: Map },
     { href: "/tableau/quartiers", label: "Quartiers", detail: "Gérer les quartiers", Icon: MapPinned },
     { href: "/tableau/aides", label: "Aides", detail: "Reconstitution de l'arbre", Icon: LifeBuoy },

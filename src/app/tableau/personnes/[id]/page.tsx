@@ -40,12 +40,22 @@ const CHAMPS = [
   "lieu_naissance",
   "lieu_deces",
   "biographie",
+  "profession",
+  "religion",
+  "retraite",
+  "residence",
+  "crise_2010_2011",
 ] as const;
 
 type PersonneFiche = Personne & {
   lieu_naissance: string | null;
   lieu_deces: string | null;
   biographie: string | null;
+  profession: string | null;
+  religion: string | null;
+  retraite: boolean | null;
+  residence: string | null;
+  crise_2010_2011: boolean | null;
 };
 
 function LienPersonne({
@@ -116,11 +126,22 @@ export default async function FichePersonnePage({
   const role = profil?.role;
   const estEditeur = role === "editeur" || role === "admin";
 
-  const { data: personne } = await supabase
-    .from("personnes")
-    .select(CHAMPS.join(","))
-    .eq("id", id)
-    .single();
+  const { data: personne } = await (async () => {
+    const essai = await supabase
+      .from("personnes")
+      .select(CHAMPS.join(","))
+      .eq("id", id)
+      .single();
+    if (!essai.error) return essai;
+    if (/column .* does not exist|could not find/i.test(essai.error.message)) {
+      return supabase
+        .from("personnes")
+        .select(CHAMPS.filter((c) => !["profession", "religion"].includes(c)).join(","))
+        .eq("id", id)
+        .single();
+    }
+    return essai;
+  })() as { data: PersonneFiche | null; error: unknown };
 
   if (!personne) notFound();
 
@@ -224,6 +245,17 @@ export default async function FichePersonnePage({
     {
       label: "Famille",
       valeur: familleRes.data?.nom ? libelleFamille(familleRes.data.nom) : "—",
+    },
+    { label: "Profession", valeur: p.profession ?? "—" },
+    { label: "Religion", valeur: p.religion ?? "—" },
+    { label: "Résidence", valeur: p.residence ?? "—" },
+    {
+      label: "Situation",
+      valeur: p.retraite
+        ? "retraité(e)"
+        : p.crise_2010_2011
+          ? "victime de la crise de 2010-2011"
+          : "—",
     },
     { label: "Source", valeur: p.source ?? "—" },
   ];

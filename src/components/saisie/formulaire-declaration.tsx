@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { Plus, RotateCcw, Loader2, X, Camera, Star } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { declarer } from "@/app/tableau/declarer/actions";
+import { declarer, verifierDoublons } from "@/app/tableau/declarer/actions";
 import { modifier, mettrePhoto } from "@/app/tableau/personnes/actions";
 import type { PersonneNouvelle } from "@/lib/types-declaration";
 import RecherchePersonne, {
@@ -49,6 +49,8 @@ export type PersonneEdition = {
   retraite: boolean;
   residence: string | null;
   crise_2010_2011: boolean;
+  profession: string | null;
+  religion: string | null;
   est_ancetre: boolean | null;
   pere: ResultatPersonne | null;
   mere: ResultatPersonne | null;
@@ -463,6 +465,8 @@ export default function FormulaireDeclaration({
   const [retraite, setRetraite] = useState(personne?.retraite ?? false);
   const [residence, setResidence] = useState(personne?.residence ?? "");
   const [crise2010, setCrise2010] = useState(personne?.crise_2010_2011 ?? false);
+  const [profession, setProfession] = useState(personne?.profession ?? "");
+  const [religion, setReligion] = useState(personne?.religion ?? "");
   const [estAncetre, setEstAncetre] = useState(personne?.est_ancetre ?? false);
   const [quartierId, setQuartierId] = useState(personne?.quartier_id ?? "");
   const [familleId, setFamilleId] = useState(personne?.famille_id ?? "");
@@ -600,6 +604,24 @@ export default function FormulaireDeclaration({
       toast.error("Le nom est obligatoire.");
       return;
     }
+    const { doublons } = await verifierDoublons(
+      nom,
+      prenom,
+      edition ? (personne?.id ?? null) : null
+    );
+    if (doublons.length > 0) {
+      const noms = doublons
+        .map((d) => [d.nom, d.prenom].filter(Boolean).join(" "))
+        .join(", ");
+      const continuer = confirm(
+        `Une personne du même nom existe déjà dans le tableau : ${noms}.` +
+          "\n\nConfirmez-vous quand même l'enregistrement ?"
+      );
+      if (!continuer) {
+        setEnregistrement(false);
+        return;
+      }
+    }
     setEnregistrement(true);
     try {
       const donnees = {
@@ -635,6 +657,8 @@ export default function FormulaireDeclaration({
         retraite,
         residence,
         crise_2010_2011: crise2010,
+        profession,
+        religion,
         est_ancetre: estAncetre,
         pere: pereId ? pereDetail : null,
         mere: mereId ? mereDetail : null,
@@ -690,6 +714,8 @@ export default function FormulaireDeclaration({
     setRetraite(personne?.retraite ?? false);
     setResidence(personne?.residence ?? "");
     setCrise2010(personne?.crise_2010_2011 ?? false);
+    setProfession(personne?.profession ?? "");
+    setReligion(personne?.religion ?? "");
     setEstAncetre(personne?.est_ancetre ?? false);
     setQuartierId(personne?.quartier_id ?? "");
     setFamilleId(personne?.famille_id ?? "");
@@ -865,6 +891,10 @@ export default function FormulaireDeclaration({
             <span className="font-medium">Retraité(e)</span>
           </label>
           {champ("Résidence (quartier habité)", residence, setResidence)}
+        </div>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          {champ("Profession (ex. cultivateur)", profession, setProfession)}
+          {champ("Religion (ex. catholique)", religion, setReligion)}
         </div>
         <label
           className="mt-4 flex cursor-pointer items-center gap-3 rounded-xl border-2 border-emerald-600 bg-white px-4 py-3 shadow-sm transition hover:bg-emerald-50"

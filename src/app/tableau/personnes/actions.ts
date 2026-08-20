@@ -23,6 +23,8 @@ export type Modification = {
   photo_url: string | null;
   source: string;
   fiabilite: string;
+  profession: string;
+  religion: string;
   pere_id: string | null;
   mere_id: string | null;
   conjoints: ConjointDeclaration[];
@@ -185,6 +187,8 @@ export async function modifier(
       retraite: m.retraite,
       residence: m.residence.trim() || null,
       crise_2010_2011: m.crise_2010_2011,
+      profession: m.profession?.trim() || null,
+      religion: m.religion?.trim() || null,
     },
     id
   );
@@ -276,6 +280,17 @@ export async function modifier(
     }
   }
 
+  try {
+    await supabase.from("journal").insert({
+      action: "modification",
+      cible_type: "personne",
+      cible_id: id,
+      detail: { nom: m.nom.trim(), prenom: m.prenom.trim() || null },
+    });
+  } catch {
+    // Table journal pas encore créée : on ignore.
+  }
+
   return { id };
 }
 
@@ -307,6 +322,15 @@ export async function mettrePhoto(
   if (error) {
     return { erreur: `Mise à jour impossible : ${error.message}` };
   }
+  try {
+    await supabase.from("journal").insert({
+      action: "photo",
+      cible_type: "personne",
+      cible_id: id,
+    });
+  } catch {
+    // Table journal pas encore créée : on ignore.
+  }
   return { id };
 }
 
@@ -330,9 +354,25 @@ export async function supprimer(
     return { erreur: "Réservé à un éditeur (CHO ou administrateur)." };
   }
 
+  const { data: personne } = await supabase
+    .from("personnes")
+    .select("nom,prenom")
+    .eq("id", id)
+    .single();
+
   const { error } = await supabase.from("personnes").delete().eq("id", id);
   if (error) {
     return { erreur: `Suppression impossible : ${error.message}` };
+  }
+  try {
+    await supabase.from("journal").insert({
+      action: "suppression",
+      cible_type: "personne",
+      cible_id: id,
+      detail: { nom: personne?.nom ?? null, prenom: personne?.prenom ?? null },
+    });
+  } catch {
+    // Table journal pas encore créée : on ignore.
   }
   return { id };
 }
