@@ -337,67 +337,140 @@ export default function VueFamille({
         </p>
       ) : (
         <div className="flex min-h-0 flex-1 items-start overflow-auto">
-          <div className="my-auto flex w-max min-w-full flex-col items-start py-6">
-            {parents.length > 0 && (
-              <>
-                <div className={cn(styles.couple, "mx-auto")}>
-                  {parents.map((parent, i) => (
-                    <Fragment key={parent.id}>
-                      {i > 0 && <UnionSep />}
-                      {carte(parent, setFocusId)}
-                    </Fragment>
-                  ))}
-                </div>
-                <div
-                  className="mx-auto h-5 w-0.5"
-                  style={{ background: "var(--arbre-ligne)" }}
-                />
-              </>
-            )}
-
-            <div className={cn(styles.couple, "mx-auto")}>
-              <span className={cn(styles.attache, styles.sansMontante, enfants.length > 0 && styles.attacheEnfants)}>
-                {carte(focus, setFocusId, true)}
-              </span>
-              {conjoints.map((c) => (
-                <Fragment key={c.id}>
-                  <UnionSep />
-                  {carte(c, setFocusId)}
-                </Fragment>
-              ))}
-            </div>
-
-            {enfants.length > 0 && (
-              <ul className={cn(styles.fratrie, styles.arbre, "mx-auto")}>
-                  {enfants.map(({ personne: enfant, autreParent }) => (
-                    <li key={enfant.id}>
-                      <div className="flex items-start justify-center">
-                        <span className={styles.attache}>
-                          {carte(enfant, setFocusId)}
-                        </span>
-                        {autreParent && (
-                          <>
-                            <div
-                              className="mx-1 h-0.5 w-10"
-                              style={{ background: "var(--arbre-ligne)" }}
-                              aria-hidden
-                            />
-                            <span className="relative flex flex-col items-center gap-1">
-                              <span className={cn(styles.attache, styles.sansMontante)}>
-                                {carte(autreParent, setFocusId)}
-                              </span>
-                              <span className="rounded-full bg-neutral-200 px-2 py-0.5 text-xs font-bold text-neutral-600">
-                                {autreParent.sexe === "M" ? "père de" : "mère de"}
-                              </span>
-                            </span>
-                          </>
-                        )}
+          <ul className={cn(styles.arbre, "mx-auto my-auto")} data-racines="">
+            <li>
+              {parents.length > 0 ? (
+                <>
+                  <div className="relative flex justify-center">
+                    <div className={styles.couple}>
+                      <span className={cn(styles.attache, styles.attacheEnfants)}>
+                        {carte(parents[0], setFocusId)}
+                      </span>
+                      {parents.length > 1 && (
+                        <>
+                          <UnionSep />
+                          {carte(parents[1], setFocusId)}
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  <ul className={styles.arbre}>
+                    <li>
+                      <div className="relative flex justify-center">
+                        <div className={styles.couple}>
+                          <span
+                            className={cn(
+                              styles.attache,
+                              enfants.length > 0 && styles.attacheEnfants
+                            )}
+                          >
+                            {carte(focus, setFocusId, true)}
+                          </span>
+                          {conjoints.map((c) => (
+                            <Fragment key={c.id}>
+                              <UnionSep />
+                              {carte(c, setFocusId)}
+                            </Fragment>
+                          ))}
+                        </div>
                       </div>
+                      {enfants.length > 0 && (
+                        <ul className={styles.arbre}>
+                          {enfants.map(({ personne: enfant, autreParent }) => (
+                            <li key={enfant.id}>
+                              <div className="relative flex justify-center">
+                                <span className={styles.attache}>
+                                  {carte(enfant, setFocusId)}
+                                </span>
+                                {autreParent && (
+                                  <>
+                                    <div className={styles.union} aria-hidden>
+                                      <span className={styles.trait} />
+                                    </div>
+                                    <span className="relative flex flex-col items-center gap-1">
+                                      <span
+                                        className={cn(
+                                          styles.attache,
+                                          styles.sansMontante
+                                        )}
+                                      >
+                                        {carte(autreParent, setFocusId)}
+                                      </span>
+                                      <span className="rounded-full bg-neutral-200 px-2 py-0.5 text-xs font-bold text-neutral-600">
+                                        {autreParent.sexe === "M"
+                                          ? "père de"
+                                          : "mère de"}
+                                      </span>
+                                    </span>
+                                  </>
+                                )}
+                              </div>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
                     </li>
-                  ))}
-                </ul>
-            )}
-          </div>
+                  </ul>
+                </>
+              ) : (
+                <>
+                  <div className="relative flex justify-center">
+                    <div className={styles.couple}>
+                      <span
+                        className={cn(
+                          styles.attache,
+                          enfants.length > 0 && styles.attacheEnfants
+                        )}
+                      >
+                        {carte(focus, setFocusId, true)}
+                      </span>
+                      {conjoints.map((c) => (
+                        <Fragment key={c.id}>
+                          <UnionSep />
+                          {carte(c, setFocusId)}
+                        </Fragment>
+                      ))}
+                    </div>
+                  </div>
+                  {enfants.length > 0 && (
+                    <ul className={styles.arbre}>
+                      {enfants.map(({ personne: enfant, autreParent }) => (
+                        <li key={enfant.id}>
+                          <div className="relative flex justify-center">
+                            <span className={styles.attache}>
+                              {carte(enfant, setFocusId)}
+                            </span>
+                            {autreParent && (
+                              <>
+                                <div className={styles.union} aria-hidden>
+                                  <span className={styles.trait} />
+                                </div>
+                                <span className="relative flex flex-col items-center gap-1">
+                                  <span
+                                    className={cn(
+                                      styles.attache,
+                                      styles.sansMontante
+                                    )}
+                                  >
+                                    {carte(autreParent, setFocusId)}
+                                  </span>
+                                  <span className="rounded-full bg-neutral-200 px-2 py-0.5 text-xs font-bold text-neutral-600">
+                                    {autreParent.sexe === "M"
+                                      ? "père de"
+                                      : "mère de"}
+                                  </span>
+                                </span>
+                              </>
+                            )}
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </>
+              )}
+            </li>
+          </ul>
         </div>
       )}
     </div>
