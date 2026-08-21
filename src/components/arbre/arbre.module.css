@@ -88,6 +88,12 @@
   display: block;
 }
 
+/* La remontée n'existe que si le nœud est au sein d'une fratrie (les racines
+   et la carte centrale de Famille proche n'ont rien au-dessus). */
+.sansMontante.attache::before {
+  display: none;
+}
+
 /* Aux racines, rien ne remonte au-dessus de la carte */
 .arbre[data-racines] > li > div > div > span.attache::before {
   display: none;

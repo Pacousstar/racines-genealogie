@@ -349,14 +349,14 @@ export default function VueFamille({
                   ))}
                 </div>
                 <div
-                  className="mx-auto h-6 w-0.5"
+                  className="mx-auto h-5 w-0.5"
                   style={{ background: "var(--arbre-ligne)" }}
                 />
               </>
             )}
 
             <div className={cn(styles.couple, "mx-auto")}>
-              <span className={cn(styles.attache, enfants.length > 0 && styles.attacheEnfants)}>
+              <span className={cn(styles.attache, styles.sansMontante, enfants.length > 0 && styles.attacheEnfants)}>
                 {carte(focus, setFocusId, true)}
               </span>
               {conjoints.map((c) => (
@@ -383,7 +383,7 @@ export default function VueFamille({
                               aria-hidden
                             />
                             <span className="relative flex flex-col items-center gap-1">
-                              <span className={styles.attache}>
+                              <span className={cn(styles.attache, styles.sansMontante)}>
                                 {carte(autreParent, setFocusId)}
                               </span>
                               <span className="rounded-full bg-neutral-200 px-2 py-0.5 text-xs font-bold text-neutral-600">
