@@ -295,7 +295,7 @@ export default function VueFamille({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-4 rounded-2xl border-2 border-emerald-600 bg-white p-4">
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3 print:hidden">
         <div className="w-56">
           <RecherchePersonne
             key={focusId ?? "vide"}

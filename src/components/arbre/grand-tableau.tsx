@@ -490,7 +490,7 @@ export default function GrandTableau({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-4 rounded-2xl border-2 border-emerald-600 bg-white p-4">
-      <div className="flex flex-wrap items-center gap-3 max-lg:flex-nowrap max-lg:overflow-x-auto">
+      <div className="flex flex-wrap items-center gap-3 max-lg:flex-nowrap max-lg:overflow-x-auto print:hidden">
         <label className="relative shrink-0">
           <Search
             className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 opacity-60"
@@ -607,7 +607,7 @@ export default function GrandTableau({
           <option value="en cours">En cours</option>
         </select>
 
-        <div className="ml-auto flex shrink-0 items-center gap-1 rounded-lg border p-1">
+        <div className="ml-auto flex shrink-0 items-center gap-1 rounded-lg border p-1 print:hidden">
           <button
             type="button"
             onClick={() => changerZoom(-0.1)}
@@ -654,7 +654,7 @@ export default function GrandTableau({
       </div>
 
       {quartiers.length > 0 && (
-        <div className="hidden flex-wrap items-center gap-x-4 gap-y-1 text-xs opacity-80 md:flex">
+        <div className="hidden flex-wrap items-center gap-x-4 gap-y-1 text-xs opacity-80 md:flex print:hidden">
           <span className="font-semibold uppercase tracking-wide opacity-60">
             Quartiers&nbsp;:
           </span>

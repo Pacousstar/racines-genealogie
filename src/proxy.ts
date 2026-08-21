@@ -61,6 +61,13 @@ export async function proxy(request: NextRequest) {
       NextResponse.redirect(new URL("/tableau", request.url))
     );
   }
+  // Anti-cache : forcer le rechargement à chaque visite pour que les
+  // navigateurs (surtout mobiles) ne servent jamais un ancien build.
+  response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate, s-maxage=0");
+  response.headers.set("Pragma", "no-cache");
+  response.headers.set("Expires", "0");
+  response.headers.set("Surrogate-Control", "no-store");
+
   return response;
 }
 

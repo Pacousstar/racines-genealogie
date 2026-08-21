@@ -106,6 +106,8 @@ export default async function ImprimerPage() {
           table { width: 100%; border-collapse: collapse; page-break-inside: auto; }
           tr { page-break-inside: avoid; }
           thead { display: table-header-group; }
+          section { page-break-before: always; }
+          section:first-of-type { page-break-before: auto; }
         }
       `}</style>
 
@@ -119,15 +121,15 @@ export default async function ImprimerPage() {
         <BoutonImprimer />
       </div>
 
-      <header className="mb-6 flex items-center gap-3 border-b-2 border-amber-700 pb-3">
+      <header className="mb-6 flex items-center gap-4 border-b-2 border-amber-700 pb-4 print:mb-4 print:pb-3">
         <div className="hidden print:block">
           <Logo />
         </div>
         <div>
-          <h1 className="text-2xl font-bold">
+          <h1 className="text-2xl font-bold text-amber-900 print:text-xl">
             Généalogie Toa-Zéo — le Grand Tableau
           </h1>
-          <p className="text-sm opacity-70">
+          <p className="mt-1 text-sm opacity-70 print:text-xs">
             Document édité le {new Date().toLocaleDateString("fr-FR")} ·{" "}
             {personnes.length} personnes · {unions.length} unions ·{" "}
             {quartiers.length} quartiers
@@ -135,9 +137,9 @@ export default async function ImprimerPage() {
         </div>
       </header>
 
-      {groupes.map(({ quartier, familles: famillesGroupe, sansFamille }) => (
-        <section key={quartier.id} className="mb-6 print:mb-4">
-          <h2 className="mb-2 text-lg font-bold text-amber-900">
+      {groupes.map(({ quartier, familles: famillesGroupe, sansFamille }, index) => (
+        <section key={quartier.id} className={`mb-6 print:mb-4 ${index > 0 ? 'print:pt-4' : ''}`}>
+          <h2 className="mb-2 text-lg font-bold text-amber-900 print:text-base print:border-b print:border-amber-200 print:pb-1">
             {quartier.nom}
           </h2>
           {famillesGroupe.map((f) => (
@@ -172,8 +174,8 @@ export default async function ImprimerPage() {
       ))}
 
       {sansQuartier.length > 0 && (
-        <section className="mb-6 print:mb-4">
-          <h2 className="mb-2 text-lg font-bold text-amber-900">
+        <section className="mb-6 print:mb-4 print:pt-4">
+          <h2 className="mb-2 text-lg font-bold text-amber-900 print:text-base print:border-b print:border-amber-200 print:pb-1">
             Sans quartier
           </h2>
           <TablePersonnes
@@ -186,7 +188,7 @@ export default async function ImprimerPage() {
         </section>
       )}
 
-      <footer className="mt-8 border-t border-current/20 pt-3 text-xs opacity-60">
+      <footer className="mt-8 border-t-2 border-amber-200 pt-3 text-xs opacity-60 print:mt-4 print:pt-2">
         Généalogie Toa-Zéo — document établi par le CHO à partir de la base du
         village.
       </footer>
@@ -208,33 +210,33 @@ function TablePersonnes({
   CelluleNom: (props: { id: string }) => React.ReactNode;
 }) {
   return (
-    <table className="w-full text-left text-xs">
+    <table className="w-full text-left text-xs print:text-[8pt]">
       <thead>
-        <tr className="border-b border-current/20">
-          <th className="py-1 pr-2 font-semibold">Personne</th>
-          <th className="py-1 pr-2 font-semibold">Naissance</th>
-          <th className="py-1 pr-2 font-semibold">Décès</th>
-          <th className="py-1 pr-2 font-semibold">Parents</th>
-          <th className="py-1 pr-2 font-semibold">Union</th>
-          <th className="py-1 pr-2 font-semibold">Enfants</th>
-          <th className="py-1 font-semibold">Source</th>
+        <tr className="border-b-2 border-amber-300 bg-amber-50 print:bg-amber-50">
+          <th className="py-1.5 pr-2 font-bold text-amber-900">Personne</th>
+          <th className="py-1.5 pr-2 font-bold text-amber-900">Naissance</th>
+          <th className="py-1.5 pr-2 font-bold text-amber-900">Décès</th>
+          <th className="py-1.5 pr-2 font-bold text-amber-900">Parents</th>
+          <th className="py-1.5 pr-2 font-bold text-amber-900">Union</th>
+          <th className="py-1.5 pr-2 font-bold text-amber-900">Enfants</th>
+          <th className="py-1.5 font-bold text-amber-900">Source</th>
         </tr>
       </thead>
       <tbody>
         {membres.map((p) => (
-          <tr key={p.id} className="border-b border-current/10 align-top">
-            <td className="py-1 pr-2 font-medium">
+          <tr key={p.id} className="border-b border-amber-100 align-top">
+            <td className="py-1.5 pr-2 font-medium">
               {nomComplet(p)}
               <span className="block text-[9px] opacity-60">
                 {p.sexe === "M" ? "♂" : p.sexe === "F" ? "♀" : ""}{" "}
                 {p.fiabilite}
               </span>
             </td>
-            <td className="py-1 pr-2">{p.date_naissance ?? "—"}</td>
-            <td className="py-1 pr-2">
+            <td className="py-1.5 pr-2">{p.date_naissance ?? "—"}</td>
+            <td className="py-1.5 pr-2">
               {p.vivant === false ? (p.date_deces ?? "—") : "vivant(e)"}
             </td>
-            <td className="py-1 pr-2">
+            <td className="py-1.5 pr-2">
               {(parentsDe.get(p.id) ?? []).map((pid) => (
                 <span key={pid} className="block">
                   <CelluleNom id={pid} />
@@ -244,11 +246,11 @@ function TablePersonnes({
                 <span className="opacity-50">—</span>
               )}
             </td>
-            <td className="py-1 pr-2">
+            <td className="py-1.5 pr-2">
               {conjointDe.get(p.id) && <CelluleNom id={conjointDe.get(p.id)!} />}
               {!conjointDe.get(p.id) && <span className="opacity-50">—</span>}
             </td>
-            <td className="py-1 pr-2">
+            <td className="py-1.5 pr-2">
               {(enfantsDe.get(p.id) ?? []).slice(0, 6).map((eid) => (
                 <span key={eid} className="block">
                   <CelluleNom id={eid} />
@@ -263,7 +265,7 @@ function TablePersonnes({
                 <span className="opacity-50">—</span>
               )}
             </td>
-            <td className="py-1">{p.source ?? "—"}</td>
+            <td className="py-1.5">{p.source ?? "—"}</td>
           </tr>
         ))}
       </tbody>
