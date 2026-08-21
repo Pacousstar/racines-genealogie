@@ -66,18 +66,19 @@ function CarteFamille({
       }}
       className={cn(
         "group relative flex w-44 cursor-pointer flex-col gap-1.5 rounded-xl border-2 bg-white p-3 text-center text-blue-900 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md",
-        mort
-          ? "border-neutral-300 opacity-80 grayscale"
-          : couleur
-            ? BORDES[couleur]
-            : "border-emerald-700/60 hover:border-emerald-700",
-        ancetre && !mort && "border-amber-500 bg-amber-100 shadow-md",
+        ancetre && !mort
+          ? "border-amber-500 bg-amber-100 shadow-md"
+          : mort
+            ? "border-neutral-300 opacity-80 grayscale"
+            : couleur
+              ? BORDES[couleur]
+              : "border-emerald-700/60 hover:border-emerald-700",
         centrale && "ring-4 ring-emerald-700/25"
       )}
       style={
-        !ancetre && couleur && !mort
-          ? { backgroundColor: TINTE[couleur] }
-          : undefined
+        ancetre || mort || !couleur
+          ? undefined
+          : { backgroundColor: TINTE[couleur] }
       }
     >
       <Link
@@ -98,7 +99,7 @@ function CarteFamille({
       <div
         className={cn(
           "mx-auto flex h-16 w-16 items-center justify-center rounded-lg text-xl font-bold",
-          mort
+          mort && !ancetre
             ? "bg-neutral-300 text-neutral-600"
             : ancetre
               ? "bg-amber-500 text-white"
@@ -113,7 +114,7 @@ function CarteFamille({
             alt={nomComplet(p)}
             className={cn(
               "h-full w-full rounded-lg object-cover",
-              mort && "grayscale"
+              mort && !ancetre && "grayscale"
             )}
           />
         ) : (
@@ -355,7 +356,9 @@ export default function VueFamille({
             )}
 
             <div className={cn(styles.couple, "mx-auto")}>
-              {carte(focus, setFocusId, true)}
+              <span className={cn(styles.attache, enfants.length > 0 && styles.attacheEnfants)}>
+                {carte(focus, setFocusId, true)}
+              </span>
               {conjoints.map((c) => (
                 <Fragment key={c.id}>
                   <UnionSep />
@@ -365,12 +368,7 @@ export default function VueFamille({
             </div>
 
             {enfants.length > 0 && (
-              <>
-                <div
-                  className="mx-auto h-16 w-0.5"
-                  style={{ background: "var(--arbre-ligne)" }}
-                />
-                <ul className={cn(styles.fratrie, styles.arbre, "mx-auto")}>
+              <ul className={cn(styles.fratrie, styles.arbre, "mx-auto")}>
                   {enfants.map(({ personne: enfant, autreParent }) => (
                     <li key={enfant.id}>
                       <div className="flex items-start justify-center">
@@ -398,7 +396,6 @@ export default function VueFamille({
                     </li>
                   ))}
                 </ul>
-              </>
             )}
           </div>
         </div>
