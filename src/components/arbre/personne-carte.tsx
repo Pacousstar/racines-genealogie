@@ -44,10 +44,11 @@ export default function PersonneCarte({
       href={`/tableau/personnes/${p.id}`}
       className={cn(
         "group relative flex w-44 flex-col gap-1.5 rounded-xl border-2 bg-white p-3 text-center text-blue-900 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md",
-        mort
-          ? "border-neutral-300 opacity-80 grayscale"
-          : "border-emerald-700/60 hover:border-emerald-700",
-        ancetre && !mort && "border-amber-500 bg-amber-100 shadow-md",
+        ancetre
+          ? "border-amber-500 bg-amber-100 shadow-md"
+          : mort
+            ? "border-neutral-300 opacity-80 grayscale"
+            : "border-emerald-700/60 hover:border-emerald-700",
         partenaire && "border-violet-500/70 bg-violet-50/60 hover:border-violet-600",
         avecConjoint && "border-current/20",
         surligne && "border-amber-500 ring-4 ring-amber-400/70 shadow-lg"
@@ -62,7 +63,7 @@ export default function PersonneCarte({
       <div
         className={cn(
           "flex h-16 w-16 items-center justify-center rounded-lg text-xl font-bold",
-          mort
+          mort && !ancetre
             ? "bg-neutral-300 text-neutral-600"
             : ancetre
               ? "bg-amber-500 text-white"
@@ -77,7 +78,7 @@ export default function PersonneCarte({
           <img
             src={photoSrc ?? ""}
             alt={nomComplet(p)}
-            className={cn("h-full w-full rounded-lg object-cover", mort && "grayscale")}
+            className={cn("h-full w-full rounded-lg object-cover", mort && !ancetre && "grayscale")}
           />
         ) : (
           initiales(p)

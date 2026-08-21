@@ -66,7 +66,7 @@ function CarteFamille({
       }}
       className={cn(
         "group relative flex w-44 cursor-pointer flex-col gap-1.5 rounded-xl border-2 bg-white p-3 text-center text-blue-900 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md",
-        ancetre && !mort
+        ancetre
           ? "border-amber-500 bg-amber-100 shadow-md"
           : mort
             ? "border-neutral-300 opacity-80 grayscale"
