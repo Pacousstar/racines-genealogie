@@ -474,6 +474,7 @@ export default function FormulaireDeclaration({
   const [nouveauQuartier, setNouveauQuartier] = useState("");
   const [modeNouvelleFamille, setModeNouvelleFamille] = useState(false);
   const [nouvelleFamille, setNouvelleFamille] = useState("");
+  const [modeResidence, setModeResidence] = useState(false);
   const [photoUrl, setPhotoUrl] = useState<string | null>(
     personne?.photo_url ?? null
   );
@@ -723,6 +724,7 @@ export default function FormulaireDeclaration({
     setNouveauQuartier("");
     setModeNouvelleFamille(false);
     setNouvelleFamille("");
+    setModeResidence(false);
     setPhotoUrl(personne?.photo_url ?? null);
     setPhotoEnvoi(false);
     setFichierEnAttente(null);
@@ -778,6 +780,23 @@ export default function FormulaireDeclaration({
             Annuler
           </button>
         </div>
+      ) : modeResidence ? (
+        <div className="flex gap-2">
+          <input
+            autoFocus
+            value={residence}
+            onChange={(e) => setResidence(e.target.value)}
+            placeholder="Lieu de résidence (ex. Abidjan)…"
+            className="flex-1 rounded-lg border border-amber-200 px-3 py-2 text-base"
+          />
+          <button
+            type="button"
+            onClick={() => setModeResidence(false)}
+            className="rounded-lg border border-emerald-200 px-3 py-2 text-sm font-medium transition hover:bg-current/5"
+          >
+            OK
+          </button>
+        </div>
       ) : (
         <select
           value={quartierId}
@@ -786,6 +805,10 @@ export default function FormulaireDeclaration({
               setModeNouveauQuartier(true);
               setQuartierId("");
               setFamilleId("");
+              return;
+            }
+            if (e.target.value === "__residence__") {
+              setModeResidence(true);
               return;
             }
             setQuartierId(e.target.value);
@@ -800,6 +823,7 @@ export default function FormulaireDeclaration({
             </option>
           ))}
           <option value="__nouveau__">＋ Ajouter un quartier…</option>
+          <option value="__residence__">＋ Ajouter une résidence…</option>
         </select>
       )}
     </label>
