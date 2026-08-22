@@ -1,25 +1,15 @@
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
-import { nomComplet, periode, libelleFamille } from "@/lib/arbre";
+import { type Personne, nomComplet, libelleFamille } from "@/lib/arbre";
 import BoutonImprimer from "./bouton-imprimer";
+import ChoixModeImpression from "./choix-mode";
+import ArbreImprimer from "@/components/arbre/arbre-imprimer";
 import Logo from "@/components/branding/logo";
 
 export const metadata: Metadata = { title: "Version papier de la généalogie" };
 export const dynamic = "force-dynamic";
 
-type Ligne = {
-  id: string;
-  nom: string;
-  prenom: string | null;
-  sexe: string | null;
-  date_naissance: string | null;
-  date_deces: string | null;
-  vivant: boolean | null;
-  source: string | null;
-  fiabilite: string | null;
-  quartier_id: string | null;
-  famille_id: string | null;
-};
+type Ligne = Personne;
 
 export default async function ImprimerPage() {
   const supabase = await createClient();
@@ -29,10 +19,10 @@ export default async function ImprimerPage() {
       supabase
         .from("personnes")
         .select(
-          "id,nom,prenom,sexe,date_naissance,date_deces,vivant,source,fiabilite,quartier_id,famille_id"
+          "id,nom,prenom,sexe,date_naissance,date_deces,vivant,source,fiabilite,quartier_id,famille_id,photo_url,est_ancetre,est_fondateur,surnom,notes"
         )
         .order("nom"),
-      supabase.from("enfants").select("parent_id,enfant_id"),
+      supabase.from("enfants").select("parent_id,enfant_id,rang"),
       supabase.from("unions").select("conjoint_1,conjoint_2,date_union,type"),
       supabase.from("quartiers").select("id,nom").order("ordre"),
       supabase.from("familles").select("id,nom,quartier_id").order("nom"),
@@ -42,6 +32,7 @@ export default async function ImprimerPage() {
   const liens = (liensRes.data ?? []) as {
     parent_id: string;
     enfant_id: string;
+    rang: number | null;
   }[];
   const unions = (unionsRes.data ?? []) as {
     conjoint_1: string;
@@ -57,7 +48,6 @@ export default async function ImprimerPage() {
   }[];
 
   const quartierNom = new Map(quartiers.map((q) => [q.id, q.nom]));
-  const familleNom = new Map(familles.map((f) => [f.id, f.nom]));
   const parId = new Map(personnes.map((p) => [p.id, p]));
 
   const parentsDe = new Map<string, string[]>();
@@ -97,46 +87,8 @@ export default async function ImprimerPage() {
     return p ? <>{nomComplet(p)}</> : <span className="opacity-50">—</span>;
   };
 
-  return (
-    <main className="mx-auto max-w-4xl rounded-3xl bg-white p-4 sm:p-6 print:max-w-none print:rounded-none print:bg-white print:p-0">
-      <style>{`
-        @media print {
-          body { font-size: 9pt; }
-          main { padding: 0 !important; }
-          table { width: 100%; border-collapse: collapse; page-break-inside: auto; }
-          tr { page-break-inside: avoid; }
-          thead { display: table-header-group; }
-          section { page-break-before: always; }
-          section:first-of-type { page-break-before: auto; }
-        }
-      `}</style>
-
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3 print:hidden">
-        <a
-          href="/tableau"
-          className="inline-flex items-center gap-1.5 text-sm font-medium opacity-80 transition hover:opacity-100"
-        >
-          ← Retour
-        </a>
-        <BoutonImprimer />
-      </div>
-
-      <header className="mb-6 flex items-center gap-4 border-b-2 border-amber-700 pb-4 print:mb-4 print:pb-3">
-        <div className="hidden print:block">
-          <Logo />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold text-amber-900 print:text-xl">
-            Généalogie Toa-Zéo — le Grand Tableau
-          </h1>
-          <p className="mt-1 text-sm opacity-70 print:text-xs">
-            Document édité le {new Date().toLocaleDateString("fr-FR")} ·{" "}
-            {personnes.length} personnes · {unions.length} unions ·{" "}
-            {quartiers.length} quartiers
-          </p>
-        </div>
-      </header>
-
+  const tableauVue = (
+    <>
       {groupes.map(({ quartier, familles: famillesGroupe, sansFamille }, index) => (
         <section key={quartier.id} className={`mb-6 print:mb-4 ${index > 0 ? 'print:pt-4' : ''}`}>
           <h2 className="mb-2 text-lg font-bold text-amber-900 print:text-base print:border-b print:border-amber-200 print:pb-1">
@@ -187,6 +139,60 @@ export default async function ImprimerPage() {
           />
         </section>
       )}
+    </>
+  );
+
+  const arbreVue = (
+    <ArbreImprimer
+      personnes={personnes}
+      liens={liens}
+      unions={unions}
+      quartiers={quartiers}
+      familles={familles}
+    />
+  );
+
+  return (
+    <main className="mx-auto max-w-4xl rounded-3xl bg-white p-4 sm:p-6 print:max-w-none print:rounded-none print:bg-white print:p-0">
+      <style>{`
+        @media print {
+          body { font-size: 9pt; }
+          main { padding: 0 !important; }
+          table { width: 100%; border-collapse: collapse; page-break-inside: auto; }
+          tr { page-break-inside: avoid; }
+          thead { display: table-header-group; }
+          section { page-break-before: always; }
+          section:first-of-type { page-break-before: auto; }
+        }
+      `}</style>
+
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3 print:hidden">
+        <a
+          href="/tableau"
+          className="inline-flex items-center gap-1.5 text-sm font-medium opacity-80 transition hover:opacity-100"
+        >
+          ← Retour
+        </a>
+        <BoutonImprimer />
+      </div>
+
+      <header className="mb-6 flex items-center gap-4 border-b-2 border-amber-700 pb-4 print:mb-4 print:pb-3">
+        <div className="hidden print:block">
+          <Logo />
+        </div>
+        <div>
+          <h1 className="text-2xl font-bold text-amber-900 print:text-xl">
+            Généalogie Toa-Zéo — le Grand Tableau
+          </h1>
+          <p className="mt-1 text-sm opacity-70 print:text-xs">
+            Document édité le {new Date().toLocaleDateString("fr-FR")} ·{" "}
+            {personnes.length} personnes · {unions.length} unions ·{" "}
+            {quartiers.length} quartiers
+          </p>
+        </div>
+      </header>
+
+      <ChoixModeImpression tableau={tableauVue} arbre={arbreVue} />
 
       <footer className="mt-8 border-t-2 border-amber-200 pt-3 text-xs opacity-60 print:mt-4 print:pt-2">
         Généalogie Toa-Zéo — document établi par le CHO à partir de la base du

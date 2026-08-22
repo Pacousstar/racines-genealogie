@@ -145,3 +145,133 @@
   font-size: 13px;
   line-height: 1;
 }
+
+/* ===== IMPRESSION : arbre compact pour A4 paysage ===== */
+.arbrePrint,
+.arbrePrint ul {
+  display: flex;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.arbrePrint ul {
+  position: relative;
+  padding-top: 14px;
+}
+
+.arbrePrint ul:not([data-racines])::before {
+  content: "";
+  position: absolute;
+  top: 14px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--arbre-ligne);
+}
+
+.arbrePrint li {
+  position: relative;
+  padding: 14px 4px 0;
+  text-align: center;
+}
+
+.arbrePrint[data-racines] > li {
+  padding-top: 0;
+}
+
+.arbrePrint .attache {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  align-self: stretch;
+}
+
+.arbrePrint .attache::before {
+  content: "";
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  width: 2px;
+  height: 14px;
+  background: var(--arbre-ligne);
+}
+
+.arbrePrint .attache::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  width: 2px;
+  height: 14px;
+  background: var(--arbre-ligne);
+  display: none;
+}
+
+.arbrePrint .attacheEnfants::after {
+  display: block;
+}
+
+.arbrePrint .sansMontante.attache::before {
+  display: none;
+}
+
+.arbrePrint[data-racines] > li > div > div > span.attache::before {
+  display: none;
+}
+
+.arbrePrint li > div > div[data-boite] > span.attache::before {
+  top: -24px;
+  height: 24px;
+}
+
+.arbrePrint li > div > div[data-boite] > span.attacheEnfants::after {
+  height: 26px;
+}
+
+.arbrePrint .couple {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+}
+
+.arbrePrint .union {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 6px;
+  color: var(--arbre-ligne);
+}
+
+.arbrePrint .trait {
+  width: 16px;
+  height: 2px;
+  background: var(--arbre-ligne);
+  border-radius: 2px;
+}
+
+.arbrePrint .symbole {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 9999px;
+  border: 2px solid var(--arbre-ligne);
+  background: #fff;
+  font-size: 11px;
+  line-height: 1;
+}
+
+.arbrePrint .pageBreak {
+  page-break-before: always;
+}
+
+.arbrePrint .pageHeader {
+  text-align: center;
+  font-size: 10px;
+  color: #888;
+  margin-bottom: 8px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #ddd;
+}

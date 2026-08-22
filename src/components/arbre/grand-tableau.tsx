@@ -50,6 +50,7 @@ function Noeud({
   couleurById,
   surlignes,
   afficherPhoto,
+  afficherQuartier = true,
   racine = false,
 }: {
   noeud: NonNullable<ReturnType<typeof prunerArbre>>;
@@ -57,6 +58,7 @@ function Noeud({
   couleurById: (id: string | null) => CouleurQuartier | null;
   surlignes: ReadonlySet<string>;
   afficherPhoto: boolean;
+  afficherQuartier?: boolean;
   racine?: boolean;
 }) {
   const couleur = couleurById(noeud.personne.quartier_id);
@@ -79,7 +81,7 @@ function Noeud({
   return (
     <li>
       <div className="relative flex justify-center">
-        {couleur && nomQuartier ? (
+        {afficherQuartier && couleur && nomQuartier ? (
           <span
             className={cn(
               "absolute -top-2 left-0 z-10 inline-flex items-center gap-1.5 rounded-xl border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide",
@@ -163,6 +165,7 @@ function Noeud({
                       couleurById={couleurById}
                       surlignes={surlignes}
                       afficherPhoto={afficherPhoto}
+                      afficherQuartier={afficherQuartier}
                     />
                   ))}
                 </ul>
@@ -182,6 +185,7 @@ function Noeud({
                   couleurById={couleurById}
                   surlignes={surlignes}
                   afficherPhoto={afficherPhoto}
+                  afficherQuartier={afficherQuartier}
                 />
               ))}
             </ul>

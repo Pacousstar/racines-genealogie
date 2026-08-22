@@ -22,8 +22,25 @@ export default function Explorateur(props: Props) {
     <div className="flex min-h-0 flex-1 flex-col px-2 pt-2 lg:px-0 lg:pt-0">
       <style>{`
         @media print {
+          @page { size: A4 landscape; margin: 10mm; }
           .explorateur-controls { display: none !important; }
           .explorateur-tree { border: none !important; padding: 0 !important; }
+          .explorateur-tree > div { 
+            overflow: visible !important; 
+            height: auto !important;
+            cursor: default !important;
+          }
+          .explorateur-tree > div > div {
+            transform: scale(0.7) !important;
+            transform-origin: top center !important;
+          }
+          .explorateur-tree .arbre li { padding: 14px 4px 0 !important; }
+          .explorateur-tree .arbre ul { padding-top: 14px !important; }
+          .explorateur-tree .arbre ul:not([data-racines])::before { top: 14px !important; }
+          .explorateur-tree .attache::before { top: -14px !important; height: 14px !important; }
+          .explorateur-tree .attacheEnfants::after { height: 14px !important; }
+          .explorateur-tree .arbre li > div > div[data-boite] > span.attache::before { top: -24px !important; height: 24px !important; }
+          .explorateur-tree .arbre li > div > div[data-boite] > span.attacheEnfants::after { height: 26px !important; }
         }
       `}</style>
       <div className="explorateur-controls mb-3 flex w-fit items-center gap-1 rounded-xl border border-white/20 p-1">
@@ -61,9 +78,13 @@ export default function Explorateur(props: Props) {
       </div>
 
       {vue === "famille" ? (
-        <VueFamille {...props} onBasculerArbre={() => setVue("arbre")} />
+        <div className="explorateur-tree">
+          <VueFamille {...props} onBasculerArbre={() => setVue("arbre")} />
+        </div>
       ) : (
-        <GrandTableau {...props} />
+        <div className="explorateur-tree">
+          <GrandTableau {...props} />
+        </div>
       )}
     </div>
   );
