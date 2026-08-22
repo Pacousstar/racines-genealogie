@@ -43,7 +43,7 @@ export default function PersonneCarte({
     <Link
       href={`/tableau/personnes/${p.id}`}
       className={cn(
-        "group relative flex w-44 flex-col gap-1.5 rounded-xl border-2 bg-white p-3 text-center text-blue-900 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md",
+        "group relative flex w-36 lg:w-44 flex-col gap-1.5 rounded-xl border-2 bg-white p-2 lg:p-3 text-center text-blue-900 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md",
         ancetre
           ? "border-amber-500 bg-amber-100 shadow-md"
           : mort
@@ -62,7 +62,7 @@ export default function PersonneCarte({
 
       <div
         className={cn(
-          "flex h-16 w-16 items-center justify-center rounded-lg text-xl font-bold",
+          "flex h-12 w-12 lg:h-16 lg:w-16 items-center justify-center rounded-lg text-lg lg:text-xl font-bold",
           mort && !ancetre
             ? "bg-neutral-300 text-neutral-600"
             : ancetre

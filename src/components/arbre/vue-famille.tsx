@@ -65,7 +65,7 @@ function CarteFamille({
         }
       }}
       className={cn(
-        "group relative flex w-44 cursor-pointer flex-col gap-1.5 rounded-xl border-2 bg-white p-3 text-center text-blue-900 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md",
+        "group relative flex w-36 lg:w-44 cursor-pointer flex-col gap-1.5 rounded-xl border-2 bg-white p-2 lg:p-3 text-center text-blue-900 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md",
         ancetre
           ? "border-amber-500 bg-amber-100 shadow-md"
           : mort
@@ -98,7 +98,7 @@ function CarteFamille({
 
       <div
         className={cn(
-          "mx-auto flex h-16 w-16 items-center justify-center rounded-lg text-xl font-bold",
+          "mx-auto flex h-12 w-12 lg:h-16 lg:w-16 items-center justify-center rounded-lg text-lg lg:text-xl font-bold",
           mort && !ancetre
             ? "bg-neutral-300 text-neutral-600"
             : ancetre
@@ -294,7 +294,7 @@ export default function VueFamille({
   );
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-4 rounded-2xl border-2 border-emerald-600 bg-white p-4">
+    <div className="flex min-h-0 flex-1 flex-col gap-4 rounded-2xl border-2 border-emerald-600 bg-white p-4 print:border-0 print:p-0 print:bg-transparent">
       <div className="flex flex-wrap items-center gap-3 print:hidden">
         <div className="w-56">
           <RecherchePersonne

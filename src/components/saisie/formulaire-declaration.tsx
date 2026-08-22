@@ -188,7 +188,7 @@ function BoutonMode({
     <button
       type="button"
       onClick={onClick}
-      className={`rounded px-2 py-1 text-[11px] font-semibold transition ${
+      className={`rounded px-3 py-1.5 lg:px-2 lg:py-1 text-xs lg:text-[11px] font-semibold transition ${
         actif ? "bg-emerald-700 text-white" : "bg-current/10 hover:bg-current/20"
       }`}
     >
@@ -1021,11 +1021,11 @@ export default function FormulaireDeclaration({
                   <button
                     type="button"
                     onClick={() => retirerConjoint(index)}
-                    className="absolute -right-2 -top-2 rounded-full bg-rose-600 p-1 text-white shadow transition hover:bg-rose-700"
+                    className="absolute -right-2 -top-2 rounded-full bg-rose-600 p-1.5 lg:p-1 text-white shadow transition hover:bg-rose-700"
                     aria-label={`Retirer le/la conjoint(e) n° ${index + 1}`}
                     title="Retirer"
                   >
-                    <X className="h-3.5 w-3.5" aria-hidden />
+                    <X className="h-4 w-4 lg:h-3.5 lg:w-3.5" aria-hidden />
                   </button>
                 </div>
               ))
@@ -1264,11 +1264,11 @@ export default function FormulaireDeclaration({
                     <button
                       type="button"
                       onClick={() => retirerEnfant(index)}
-                      className="rounded bg-rose-600 p-1 text-white shadow transition hover:bg-rose-700"
+                      className="rounded bg-rose-600 p-1.5 lg:p-1 text-white shadow transition hover:bg-rose-700"
                       aria-label={`Retirer l'enfant n° ${index + 1}`}
                       title="Retirer"
                     >
-                      <X className="h-3.5 w-3.5" aria-hidden />
+                      <X className="h-4 w-4 lg:h-3.5 lg:w-3.5" aria-hidden />
                     </button>
                   </div>
                   {enfant.mode === "relier" && (

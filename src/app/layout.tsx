@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Toaster } from "react-hot-toast";
 import "./globals.css";
 
@@ -11,6 +11,13 @@ export const metadata: Metadata = {
     "L'arbre du village Toa-Zéo — table de généalogie pilotée par le CHO Tahidi Denis DIHI.",
   applicationName: "Généalogie Toa-Zéo",
   robots: { index: false, follow: false },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#f97316",
 };
 
 export default function RootLayout({

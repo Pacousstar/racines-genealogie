@@ -192,7 +192,9 @@ export default async function ImprimerPage() {
         </div>
       </header>
 
-      <ChoixModeImpression tableau={tableauVue} arbre={arbreVue} />
+      <div className="overflow-x-auto">
+        <ChoixModeImpression tableau={tableauVue} arbre={arbreVue} />
+      </div>
 
       <footer className="mt-8 border-t-2 border-amber-200 pt-3 text-xs opacity-60 print:mt-4 print:pt-2">
         Généalogie Toa-Zéo — document établi par le CHO à partir de la base du

@@ -50,7 +50,7 @@ function Noeud({
   couleurById,
   surlignes,
   afficherPhoto,
-  afficherQuartier = true,
+  afficherQuartier = false,
   racine = false,
 }: {
   noeud: NonNullable<ReturnType<typeof prunerArbre>>;
@@ -493,7 +493,7 @@ export default function GrandTableau({
   };
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-4 rounded-2xl border-2 border-emerald-600 bg-white p-4">
+    <div className="flex min-h-0 flex-1 flex-col gap-4 rounded-2xl border-2 border-emerald-600 bg-white p-4 print:border-0 print:p-0 print:bg-transparent">
       <div className="flex flex-wrap items-center gap-3 max-lg:flex-nowrap max-lg:overflow-x-auto print:hidden">
         <label className="relative shrink-0">
           <Search
@@ -615,11 +615,11 @@ export default function GrandTableau({
           <button
             type="button"
             onClick={() => changerZoom(-0.1)}
-            className="rounded-md p-1.5 transition hover:bg-current/10"
+            className="rounded-md p-2 lg:p-1.5 transition hover:bg-current/10"
             aria-label="Zoom arrière"
             title="Zoom arrière"
           >
-            <ZoomOut className="h-4 w-4" aria-hidden />
+            <ZoomOut className="h-5 w-5 lg:h-4 lg:w-4" aria-hidden />
           </button>
           <button
             type="button"
@@ -627,20 +627,20 @@ export default function GrandTableau({
               setAjustementAuto(true);
               ajuster();
             }}
-            className="rounded-md p-1.5 transition hover:bg-current/10"
+            className="rounded-md p-2 lg:p-1.5 transition hover:bg-current/10"
             aria-label="Ajuster à l'écran"
             title="Ajuster à l'écran"
           >
-            <Maximize className="h-4 w-4" aria-hidden />
+            <Maximize className="h-5 w-5 lg:h-4 lg:w-4" aria-hidden />
           </button>
           <button
             type="button"
             onClick={() => changerZoom(0.1)}
-            className="rounded-md p-1.5 transition hover:bg-current/10"
+            className="rounded-md p-2 lg:p-1.5 transition hover:bg-current/10"
             aria-label="Zoom avant"
             title="Zoom avant"
           >
-            <ZoomIn className="h-4 w-4" aria-hidden />
+            <ZoomIn className="h-5 w-5 lg:h-4 lg:w-4" aria-hidden />
           </button>
           <button
             type="button"
@@ -648,17 +648,17 @@ export default function GrandTableau({
               setAjustementAuto(false);
               setZoom(1);
             }}
-            className="rounded-md p-1.5 transition hover:bg-current/10"
+            className="rounded-md p-2 lg:p-1.5 transition hover:bg-current/10"
             aria-label="Réinitialiser le zoom"
             title="100 %"
           >
-            <RotateCcw className="h-4 w-4" aria-hidden />
+            <RotateCcw className="h-5 w-5 lg:h-4 lg:w-4" aria-hidden />
           </button>
         </div>
       </div>
 
       {quartiers.length > 0 && (
-        <div className="hidden flex-wrap items-center gap-x-4 gap-y-1 text-xs opacity-80 md:flex print:hidden">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs opacity-80 print:hidden">
           <span className="font-semibold uppercase tracking-wide opacity-60">
             Quartiers&nbsp;:
           </span>
