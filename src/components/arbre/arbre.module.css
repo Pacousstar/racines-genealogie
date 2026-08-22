@@ -280,26 +280,38 @@
 @media print {
   /* Ajuster les connecteurs de l'arbre normal pour impression */
   .arbre li {
-    padding: 14px 4px 0 !important;
+    padding: 10px 2px 0 !important;
   }
   .arbre ul {
-    padding-top: 14px !important;
+    padding-top: 10px !important;
   }
   .arbre ul:not([data-racines])::before {
-    top: 14px !important;
+    top: 10px !important;
   }
   .attache::before {
-    top: -14px !important;
-    height: 14px !important;
+    top: -10px !important;
+    height: 10px !important;
   }
   .attacheEnfants::after {
-    height: 14px !important;
+    height: 10px !important;
   }
   .arbre li > div > div[data-boite] > span.attache::before {
-    top: -24px !important;
-    height: 24px !important;
+    top: -18px !important;
+    height: 18px !important;
   }
   .arbre li > div > div[data-boite] > span.attacheEnfants::after {
-    height: 26px !important;
+    height: 20px !important;
+  }
+  .union {
+    gap: 3px !important;
+    padding: 0 4px !important;
+  }
+  .trait {
+    width: 12px !important;
+  }
+  .symbole {
+    width: 20px !important;
+    height: 20px !important;
+    font-size: 10px !important;
   }
 }

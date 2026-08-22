@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { type Personne, nomComplet, libelleFamille } from "@/lib/arbre";
 import BoutonImprimer from "./bouton-imprimer";
 import ChoixModeImpression from "./choix-mode";
-import ArbreImprimer from "@/components/arbre/arbre-imprimer";
+import ArbreTableau from "@/components/arbre/arbre-tableau-imprimer";
 import Logo from "@/components/branding/logo";
 
 export const metadata: Metadata = { title: "Version papier de la généalogie" };
@@ -143,7 +143,7 @@ export default async function ImprimerPage() {
   );
 
   const arbreVue = (
-    <ArbreImprimer
+    <ArbreTableau
       personnes={personnes}
       liens={liens}
       unions={unions}

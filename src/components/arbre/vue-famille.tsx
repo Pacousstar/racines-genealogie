@@ -317,7 +317,7 @@ export default function VueFamille({
           <button
             type="button"
             onClick={() => setFocusId(ancetreId)}
-            className="inline-flex items-center gap-1 rounded-lg border border-amber-500/50 bg-amber-50 px-2.5 py-1.5 text-xs font-semibold text-amber-800 transition hover:bg-amber-100"
+            className="inline-flex items-center gap-1 rounded-lg border border-amber-500/50 bg-amber-50 px-2.5 py-1.5 text-xs font-semibold text-amber-800 transition hover:bg-amber-100 print:hidden"
           >
             <Star className="h-3.5 w-3.5" aria-hidden /> Revenir à l&apos;ancêtre
           </button>
@@ -325,7 +325,7 @@ export default function VueFamille({
         <button
           type="button"
           onClick={onBasculerArbre}
-          className="ml-auto inline-flex items-center gap-1.5 rounded-lg bg-emerald-700 px-3 py-2 text-sm font-semibold text-white transition hover:bg-emerald-800"
+          className="ml-auto inline-flex items-center gap-1.5 rounded-lg bg-emerald-700 px-3 py-2 text-sm font-semibold text-white transition hover:bg-emerald-800 print:hidden"
         >
           <Trees className="h-4 w-4" aria-hidden /> Arbre complet
         </button>

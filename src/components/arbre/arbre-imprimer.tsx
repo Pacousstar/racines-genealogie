@@ -257,7 +257,7 @@ export default function ArbreImprimer({
           key={i}
           className={cn(i > 0 && "print:pageBreak", "mb-8")}
         >
-          <div className="pageHeader print:block hidden">
+          <div className={cn(styles.pageHeader, "print:block hidden")}>
             Généalogie Toa-Zéo — Arbre complet — Page {i + 1}/{pages.length}
           </div>
           <div className="flex justify-center">

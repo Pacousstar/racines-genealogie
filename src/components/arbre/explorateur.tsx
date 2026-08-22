@@ -23,16 +23,22 @@ export default function Explorateur(props: Props) {
       <style>{`
         @media print {
           @page { size: A4 landscape; margin: 10mm; }
+          body { font-size: 8pt; }
           .explorateur-controls { display: none !important; }
-          .explorateur-tree { border: none !important; padding: 0 !important; }
+          .explorateur-tree {
+            border: none !important;
+            padding: 0 !important;
+            overflow: visible !important;
+            height: auto !important;
+          }
           .explorateur-tree > div {
             overflow: visible !important;
             height: auto !important;
-            cursor: default !important;
+            min-height: auto !important;
           }
           .explorateur-tree > div > div {
-            transform: scale(0.7) !important;
-            transform-origin: top center !important;
+            overflow: visible !important;
+            height: auto !important;
           }
         }
       `}</style>
